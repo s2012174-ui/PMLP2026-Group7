@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EcoPulse</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              eco: {
+                emerald: '#10b981',
+                sage: '#4ade80',
+                slate: '#1f2937',
+                mist: '#e2e8f0',
+                amber: '#f59e0b',
+                coral: '#f87171',
+                teal: '#14b8a6'
+              }
+            },
+            boxShadow: {
+              soft: '0 20px 50px rgba(15, 118, 110, 0.18)'
+            }
+          }
+        }
+      };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
+    <div class="min-h-screen dark:bg-slate-950">
+      <header class="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur-md dark:border-slate-700 dark:bg-slate-950/80">
+        <nav class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4 lg:px-8">
+          <a href="#home" class="flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-xl shadow-sm">🌿</div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span id="ecoPulseBrand" class="text-xl font-bold tracking-tight text-slate-900">EcoPulse</span>
+                <span class="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-700">Hackathon Prototype</span>
+              </div>
+            </div>
+          </a>
+
+          <div class="hidden items-center gap-8 text-sm font-medium text-slate-600 md:flex dark:text-slate-300">
+            <a href="#home" class="nav-btn active transition hover:text-emerald-700 dark:hover:text-emerald-300" data-target="home">Home</a>
+            <a href="#airQualityPanel" class="nav-btn transition hover:text-emerald-700 dark:hover:text-emerald-300" data-target="airQualityPanel">Air Quality</a>
+            <a href="#carbonPanel" class="nav-btn transition hover:text-emerald-700 dark:hover:text-emerald-300" data-target="carbonPanel">Carbon Tracker</a>
+            <a href="#recyclingPanel" class="nav-btn transition hover:text-emerald-700 dark:hover:text-emerald-300" data-target="recyclingPanel">Recycling</a>
+            <a href="#sitemap" class="nav-btn transition hover:text-emerald-700 dark:hover:text-emerald-300" data-target="sitemap">Sitemap</a>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button id="themeToggleBtn" type="button" class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:scale-[1.02] hover:border-emerald-300 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100" aria-label="Toggle theme">
+              <i data-lucide="moon" class="h-4 w-4"></i>
+            </button>
+
+            <div id="fontSizeSelector" class="flex items-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+              <button type="button" data-font-size="normal" class="font-size-btn rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:text-emerald-700">A-</button>
+              <button type="button" data-font-size="medium" class="font-size-btn rounded-lg px-2.5 py-1.5 text-sm font-semibold text-slate-600 transition hover:text-emerald-700">A</button>
+              <button type="button" data-font-size="large" class="font-size-btn rounded-lg px-2.5 py-1.5 text-base font-semibold text-slate-600 transition hover:text-emerald-700">A+</button>
+            </div>
+
+            <button id="headerDemoFillBtn" type="button" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:scale-[1.02] hover:border-emerald-300 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">Demo Fill</button>
+            <div id="userState" class="hidden items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+              <span id="sidebarUserName" class="text-sm font-semibold text-slate-700 dark:text-slate-100">Test1234</span>
+              <span id="welcomeText" class="text-sm font-semibold text-slate-700 dark:text-slate-100">Welcome, Test1234</span>
+              <button id="logoutBtn" type="button" class="text-xs font-semibold text-slate-500 transition hover:text-emerald-700 dark:text-slate-300">Log Out</button>
+            </div>
+            <button id="loginPromptBtn" class="auth-trigger hidden rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:scale-[1.02] hover:border-emerald-300 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">Log In</button>
+            <a href="#dashboardOverview" class="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-600/20 transition hover:scale-[1.02] hover:bg-emerald-500">Launch Dashboard</a>
+          </div>
+        </nav>
+      </header>
+
+      <main>
+        <section id="home" class="relative overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-sky-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+          <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.15),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(14,165,233,0.12),_transparent_30%)]"></div>
+          <div class="relative mx-auto grid max-w-7xl gap-10 px-6 py-20 lg:grid-cols-[1.15fr_0.85fr] lg:px-8 lg:py-24">
+            <div class="flex flex-col justify-center">
+              <div class="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-white/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 shadow-sm">
+                <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                Smart city intelligence
+              </div>
+
+              <h1 class="max-w-xl text-4xl font-black tracking-tight text-slate-900 md:text-5xl xl:text-6xl">
+                Real-Time Urban Environmental Intelligence for Greener Cities
+              </h1>
+
+              <p class="mt-6 max-w-xl text-lg leading-8 text-slate-600">
+                Explore how live street AQI monitoring, personalized carbon tracking, and intelligent recycling guidance help communities reduce emissions and build cleaner neighborhoods.
+              </p>
+
+              <div class="mt-8 flex flex-wrap items-center gap-4">
+                <a href="#dashboardOverview" class="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-600/25 transition hover:scale-[1.05] hover:bg-emerald-500">Explore Dashboard</a>
+                <a id="tryCarbonCalcLink" href="#carbonPanel" class="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:scale-[1.05] hover:border-emerald-300 hover:text-emerald-700">Try Carbon Calculator</a>
+              </div>
+
+              <div class="mt-10 flex flex-wrap gap-4 text-sm text-slate-600">
+                <div class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm">
+                  <span class="block text-[10px] uppercase tracking-[0.18em] text-slate-500">Live Street AQI</span>
+                  <strong class="mt-1 block text-lg font-bold text-slate-900">42 Good</strong>
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm">
+                  <span class="block text-[10px] uppercase tracking-[0.18em] text-slate-500">CO₂ Tracked</span>
+                  <strong class="mt-1 block text-lg font-bold text-slate-900">12.4k kg</strong>
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 shadow-sm">
+                  <span class="block text-[10px] uppercase tracking-[0.18em] text-slate-500">Recycling Stations</span>
+                  <strong class="mt-1 block text-lg font-bold text-slate-900">85+ Active</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-center">
+              <div class="w-full max-w-lg rounded-[2rem] border border-slate-200 bg-white/80 p-4 shadow-soft backdrop-blur-sm">
+                <div class="rounded-[1.5rem] border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 p-5 text-white">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="text-[10px] uppercase tracking-[0.22em] text-slate-300">Current environment</p>
+                      <h2 class="mt-2 text-2xl font-bold">Urban signal summary</h2>
+                    </div>
+                    <div class="rounded-full border border-emerald-400/35 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-200">Live</div>
+                  </div>
+
+                  <div class="mt-6 grid grid-cols-2 gap-3">
+                    <div class="rounded-2xl bg-white/5 p-4">
+                      <p class="text-[10px] uppercase tracking-[0.18em] text-slate-300">AQI</p>
+                      <div class="mt-3 flex items-end gap-2">
+                        <span class="text-3xl font-bold">42</span>
+                        <span class="mb-1 text-sm text-slate-300">Good</span>
+                      </div>
+                    </div>
+                    <div class="rounded-2xl bg-white/5 p-4">
+                      <p class="text-[10px] uppercase tracking-[0.18em] text-slate-300">Carbon</p>
+                      <div class="mt-3 flex items-end gap-2">
+                        <span class="text-3xl font-bold">7.2</span>
+                        <span class="mb-1 text-sm text-slate-300">kg</span>
+                      </div>
+                    </div>
+                    <div class="rounded-2xl bg-white/5 p-4">
+                      <p class="text-[10px] uppercase tracking-[0.18em] text-slate-300">Waste</p>
+                      <div class="mt-3 flex items-end gap-2">
+                        <span class="text-3xl font-bold">84%</span>
+                        <span class="mb-1 text-sm text-slate-300">recycled</span>
+                      </div>
+                    </div>
+                    <div class="rounded-2xl bg-white/5 p-4">
+                      <p class="text-[10px] uppercase tracking-[0.18em] text-slate-300">Grid</p>
+                      <div class="mt-3 flex items-end gap-2">
+                        <span class="text-3xl font-bold">98%</span>
+                        <span class="mb-1 text-sm text-slate-300">uptime</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div class="mb-3 flex items-center justify-between text-sm text-slate-200">
+                      <span>Street response index</span>
+                      <span class="font-semibold text-emerald-300">+12.7%</span>
+                    </div>
+                    <div class="h-2.5 w-full overflow-hidden rounded-full bg-slate-700">
+                      <div class="h-full w-[74%] rounded-full bg-gradient-to-r from-emerald-400 to-emerald-300"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="dashboardOverview" class="mx-auto max-w-7xl px-6 py-18 lg:px-8 lg:py-20 dark:bg-slate-950">
+          <div class="mb-8 flex items-center justify-between gap-4">
+            <div>
+              <p class="text-[10px] uppercase tracking-[0.22em] text-slate-500">Live dashboard</p>
+              <h2 class="mt-2 text-3xl font-bold tracking-tight text-slate-900">Operational overview</h2>
+            </div>
+            <button id="resetAppBtn" type="button" class="rounded-xl border border-slate-200 bg-slate-900 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:scale-[1.02] hover:bg-slate-700">Reset App</button>
+          </div>
+
+          <div class="grid grid-cols-12 gap-6">
+            <div class="col-span-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+              <div class="flex items-center justify-between">
+                <p class="text-[10px] uppercase tracking-[0.18em] text-slate-500">Current AQI</p>
+                <span class="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700">Good</span>
+              </div>
+              <div class="mt-5 flex items-end gap-2">
+                <span id="heroScore" class="text-4xl font-bold tracking-tight text-slate-900">86</span>
+                <span class="mb-1 text-sm text-slate-500">index</span>
+              </div>
+              <p class="mt-3 text-sm text-slate-500">Overall city air quality remains stable</p>
+            </div>
+
+            <div class="col-span-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+              <div class="flex items-center justify-between">
+                <p class="text-[10px] uppercase tracking-[0.18em] text-slate-500">Today’s CO₂</p>
+                <span class="rounded-full bg-amber-50 px-2 py-1 text-[10px] font-semibold text-amber-700">Target</span>
+              </div>
+              <div class="mt-5 flex items-end gap-2">
+                <span id="currentCarbonTotal" class="text-4xl font-bold tracking-tight text-slate-900">7.2 kg</span>
+              </div>
+              <p class="mt-3 text-sm text-slate-500">Estimated output across your daily routine</p>
+            </div>
+
+            <div class="col-span-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+              <div class="flex items-center justify-between">
+                <p class="text-[10px] uppercase tracking-[0.18em] text-slate-500">Recycling</p>
+                <span class="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700">74%</span>
+              </div>
+              <div class="mt-5 flex items-end gap-2">
+                <span class="text-4xl font-bold tracking-tight text-slate-900">4</span>
+                <span class="mb-1 text-sm text-slate-500">spots</span>
+              </div>
+              <p class="mt-3 text-sm text-slate-500">Nearby certified drop-off hubs available</p>
+            </div>
+
+            <div class="col-span-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+              <div class="flex items-center justify-between">
+                <p class="text-[10px] uppercase tracking-[0.18em] text-slate-500">System Health</p>
+                <span class="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700">Stable</span>
+              </div>
+              <div class="mt-5 flex items-end gap-2">
+                <span class="text-4xl font-bold tracking-tight text-slate-900">98%</span>
+              </div>
+              <p class="mt-3 text-sm text-slate-500">Network uptime across monitored districts</p>
+            </div>
+
+            <section id="airQualityPanel" class="col-span-7 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-[10px] uppercase tracking-[0.22em] text-slate-500">Air quality monitor</p>
+                  <h3 class="mt-1 text-2xl font-bold text-slate-900">Live street readings</h3>
+                </div>
+                <select id="streetSelect" class="w-56 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none ring-0 transition focus:border-emerald-400">
+                  <option>5th Avenue</option>
+                  <option>Central Park West</option>
+                  <option>Main Street</option>
+                  <option>Riverside Blvd</option>
+                </select>
+              </div>
+
+              <div class="mt-6 grid grid-cols-2 gap-6">
+                <div class="space-y-4">
+                  <div class="rounded-2xl bg-gradient-to-br from-emerald-50 via-white to-slate-50 p-4">
+                    <div class="flex items-center justify-between">
+                      <p class="text-xs uppercase tracking-[0.22em] text-slate-500">Current AQI</p>
+                      <span id="aqiStatus" class="status-badge moderate">Moderate</span>
+                    </div>
+                    <div class="mt-5 flex items-end gap-3">
+                      <span id="aqiValue" class="text-5xl font-bold tracking-tight text-slate-900">68</span>
+                      <span class="mb-2 text-sm text-slate-500">index</span>
+                    </div>
+                  </div>
+
+                  <div class="space-y-4">
+                    <div class="metric-card-dashboard">
+                      <div class="mb-2 flex items-center justify-between text-sm">
+                        <span class="font-medium text-slate-600">PM2.5</span>
+                        <span id="pm25Value" class="font-bold text-slate-900">32</span>
+                      </div>
+                      <div class="bar-track-dashboard"><span id="pm25Bar" class="bar-fill-dashboard" style="width:42%"></span></div>
+                    </div>
+
+                    <div class="metric-card-dashboard">
+                      <div class="mb-2 flex items-center justify-between text-sm">
+                        <span class="font-medium text-slate-600">PM10</span>
+                        <span id="pm10Value" class="font-bold text-slate-900">48</span>
+                      </div>
+                      <div class="bar-track-dashboard"><span id="pm10Bar" class="bar-fill-dashboard yellow-bar" style="width:52%"></span></div>
+                    </div>
+
+                    <div class="metric-card-dashboard">
+                      <div class="mb-2 flex items-center justify-between text-sm">
+                        <span class="font-medium text-slate-600">NO₂</span>
+                        <span id="no2Value" class="font-bold text-slate-900">26</span>
+                      </div>
+                      <div class="bar-track-dashboard"><span id="no2Bar" class="bar-fill-dashboard green-bar" style="width:36%"></span></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 p-4 text-white">
+                  <div class="flex items-center justify-between">
+                    <p class="text-xs uppercase tracking-[0.18em] text-slate-300">Street heat map</p>
+                    <span class="rounded-full bg-white/10 px-2 py-1 text-[10px] font-semibold text-emerald-200">Live</span>
+                  </div>
+
+                  <div class="mt-5 grid h-64 grid-cols-8 grid-rows-8 gap-2 rounded-2xl bg-slate-900/40 p-3">
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-emerald-400/80"></div>
+                    <div class="rounded-md bg-amber-400/80"></div>
+                    <div class="rounded-md bg-amber-500/80"></div>
+                    <div class="rounded-md bg-emerald-400/80"></div>
+                    <div class="rounded-md bg-sky-400/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-slate-600/80"></div>
+                    <div class="rounded-md bg-amber-400/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-emerald-400/80"></div>
+                    <div class="rounded-md bg-orange-400/80"></div>
+                    <div class="rounded-md bg-red-400/80"></div>
+                    <div class="rounded-md bg-amber-400/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-slate-600/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-emerald-400/80"></div>
+                    <div class="rounded-md bg-amber-500/80"></div>
+                    <div class="rounded-md bg-emerald-300/80"></div>
+                    <div class="rounded-md bg-slate-500/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-amber-400/80"></div>
+                    <div class="rounded-md bg-red-400/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-sky-400/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-slate-600/80"></div>
+                    <div class="rounded-md bg-emerald-400/80"></div>
+                    <div class="rounded-md bg-amber-500/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-slate-500/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-emerald-400/80"></div>
+                    <div class="rounded-md bg-amber-400/80"></div>
+                    <div class="rounded-md bg-red-400/80"></div>
+                    <div class="rounded-md bg-orange-400/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-emerald-300/80"></div>
+                    <div class="rounded-md bg-slate-600/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-amber-500/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-sky-400/80"></div>
+                    <div class="rounded-md bg-slate-500/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-amber-400/80"></div>
+                    <div class="rounded-md bg-emerald-400/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-slate-600/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-amber-400/80"></div>
+                    <div class="rounded-md bg-slate-500/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-amber-500/80"></div>
+                    <div class="rounded-md bg-emerald-400/80"></div>
+                    <div class="rounded-md bg-slate-600/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-amber-400/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-slate-500/80"></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section id="carbonPanel" class="col-span-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-[10px] uppercase tracking-[0.22em] text-slate-500">Carbon tracker</p>
+                  <h3 class="mt-1 text-2xl font-bold text-slate-900">Footprint calculator</h3>
+                </div>
+                <button id="saveTodayBtn" type="button" class="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">Save today</button>
+              </div>
+
+              <div class="mt-6 space-y-5">
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div class="mb-3 flex items-center justify-between text-sm">
+                    <label for="commuteRange" class="font-medium text-slate-600">Commute distance</label>
+                    <span id="commuteValue" class="font-semibold text-slate-900">18 km</span>
+                  </div>
+                  <input id="commuteRange" type="range" min="0" max="60" value="18" class="w-full accent-emerald-500" />
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div class="mb-3 flex items-center justify-between text-sm">
+                    <label for="energyRange" class="font-medium text-slate-600">Energy use</label>
+                    <span id="energyValue" class="font-semibold text-slate-900">6 kWh</span>
+                  </div>
+                  <input id="energyRange" type="range" min="0" max="30" value="6" class="w-full accent-emerald-500" />
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div class="mb-3 flex items-center justify-between text-sm">
+                    <label for="meatRange" class="font-medium text-slate-600">Meat consumption</label>
+                    <span id="meatValue" class="font-semibold text-slate-900">3 meals</span>
+                  </div>
+                  <input id="meatRange" type="range" min="0" max="10" value="3" class="w-full accent-emerald-500" />
+                </div>
+              </div>
+            </section>
+
+            <section class="col-span-7 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-[10px] uppercase tracking-[0.22em] text-slate-500">Output</p>
+                  <h3 id="realTimeEstimateTitle" class="mt-1 text-2xl font-bold text-slate-900">Real-time estimate</h3>
+                </div>
+                <span class="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">Target: 12kg</span>
+              </div>
+
+              <div class="mt-6 grid grid-cols-2 gap-6">
+                <div class="rounded-2xl bg-gradient-to-br from-emerald-50 via-white to-sky-50 p-5">
+                  <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Estimated daily CO₂</p>
+                  <div class="mt-5 flex items-end gap-2">
+                    <span id="carbonResult" class="text-5xl font-bold tracking-tight text-slate-900">7.2</span>
+                    <span class="mb-2 text-base text-slate-500">kg</span>
+                  </div>
+                  <div class="mt-5">
+                    <div class="goal-track-dashboard">
+                      <span id="goalFill" class="goal-fill-dashboard" style="width: 60%"></span>
+                    </div>
+                    <p id="goalLabel" class="mt-3 text-sm text-slate-500">Target: 12kg</p>
+                  </div>
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <p class="text-xs uppercase tracking-[0.2em] text-slate-500">7-day trend</p>
+                  <div id="historyBars" class="mt-6 flex h-36 items-end justify-between gap-3"></div>
+                </div>
+              </div>
+            </section>
+
+            <section id="recyclingPanel" class="col-span-12 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-[10px] uppercase tracking-[0.22em] text-slate-500">Recycling hub</p>
+                  <h3 class="mt-1 text-2xl font-bold text-slate-900">Nearby drop-offs</h3>
+                </div>
+                <button id="scanItemBtn" type="button" class="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100">Scan item</button>
+              </div>
+
+              <div class="mt-6 grid grid-cols-12 gap-6">
+                <div class="col-span-5 space-y-4">
+                  <div class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                    <input id="binSearch" type="text" placeholder="Search nearby drop-offs" class="w-full border-0 bg-transparent px-1 text-sm text-slate-700 outline-none placeholder:text-slate-400" />
+                  </div>
+
+                  <div id="dropoffList" class="space-y-3"></div>
+                </div>
+
+                <div class="col-span-7 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 p-5 text-white">
+                  <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                    <div>
+                      <p class="text-[10px] uppercase tracking-[0.22em] text-slate-300">Map view</p>
+                      <h4 class="mt-1 text-xl font-semibold">District recycling lanes</h4>
+                    </div>
+                    <span class="rounded-full bg-emerald-500/15 px-2 py-1 text-[10px] font-semibold text-emerald-200">Updated 5m ago</span>
+                  </div>
+
+                  <div class="mt-5 grid h-56 grid-cols-10 grid-rows-8 gap-2 rounded-2xl bg-slate-900/40 p-3">
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-emerald-400/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-amber-500/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-amber-500/80"></div>
+                    <div class="rounded-md bg-emerald-400/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-emerald-400/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-amber-500/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-emerald-400/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-amber-500/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-emerald-400/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-amber-500/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-emerald-400/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-emerald-400/80"></div>
+                    <div class="rounded-md bg-amber-500/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-emerald-500/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                    <div class="rounded-md bg-slate-700/80"></div>
+                  </div>
+
+                  <div class="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div class="flex items-center justify-between text-sm text-slate-200">
+                      <span>Material guide</span>
+                      <select id="materialSelect" class="w-38 rounded-lg border border-white/10 bg-slate-800 px-2 py-1.5 text-xs text-slate-100 outline-none">
+                        <option>Plastic #1</option>
+                        <option>Plastic #2</option>
+                        <option>Glass</option>
+                        <option>Batteries</option>
+                        <option>E-Waste</option>
+                        <option>Paper</option>
+                      </select>
+                    </div>
+                    <div id="materialInfo" class="mt-4 rounded-xl bg-white/5 p-3 text-sm text-slate-200"></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+      </main>
+
+      <footer id="sitemap" class="mt-20 bg-slate-900 text-slate-400">
+        <div class="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+          <div class="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/15 text-xl text-emerald-300">🌿</div>
+                <div>
+                  <h3 class="text-xl font-bold text-white">EcoPulse</h3>
+                </div>
+              </div>
+              <p class="mt-4 text-sm leading-7 text-slate-400">
+                A civic intelligence prototype for cleaner cities, smarter waste systems, and more transparent environmental decision-making.
+              </p>
+              <p class="mt-4 text-xs uppercase tracking-[0.2em] text-slate-500">Hackathon prototype • internal demo</p>
+            </div>
+
+            <div>
+              <h4 class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-200">Features</h4>
+              <ul class="mt-5 space-y-3 text-sm">
+                <li><a href="#airQualityPanel" class="transition hover:text-emerald-300">Street AQI Map</a></li>
+                <li><a href="#carbonPanel" class="transition hover:text-emerald-300">Carbon Footprint API</a></li>
+                <li><a href="#recyclingPanel" class="transition hover:text-emerald-300">Smart Bin Route</a></li>
+                <li><a href="#dashboardOverview" class="transition hover:text-emerald-300">Daily Metrics</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-200">Resources</h4>
+              <ul class="mt-5 space-y-3 text-sm">
+                <li><a href="#" class="transition hover:text-emerald-300">Documentation</a></li>
+                <li><a href="#" class="transition hover:text-emerald-300">Environmental Data Specs</a></li>
+                <li><a href="#" class="transition hover:text-emerald-300">Privacy Policy</a></li>
+                <li><a href="#" class="transition hover:text-emerald-300">Terms</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-200">Hackathon Info</h4>
+              <div class="mt-5 space-y-4 text-sm">
+                <p class="text-slate-400">EcoPulse Team</p>
+                <label class="flex items-center gap-2 text-slate-300">
+                  <input type="checkbox" class="h-4 w-4 rounded border-slate-600 bg-slate-800 text-emerald-500 accent-emerald-500" />
+                  Presentation Mode
+                </label>
+                <button id="resetAppBtnFooter" type="button" class="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-emerald-500 hover:text-white">Clear localStorage</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-800">
+          <div class="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-5 text-sm text-slate-500 md:flex-row md:items-center md:justify-between lg:px-8">
+            <p>© 2026 EcoPulse. All rights reserved.</p>
+            <p>Built for Hackathon 2026</p>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <div id="authNotice" class="hidden fixed left-1/2 top-20 z-[60] -translate-x-1/2 rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-xl shadow-slate-900/10">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+          <i data-lucide="info" class="h-4 w-4"></i>
+        </span>
+        <span id="authNoticeText">Please log in to save your changes.</span>
+        <button id="authNoticeClose" type="button" class="ml-2 text-slate-500 transition hover:text-slate-700" aria-label="Close notice">
+          <i data-lucide="x" class="h-4 w-4"></i>
+        </button>
+      </div>
+    </div>
+
+    <div id="authModal" class="modal auth-modal hidden" aria-modal="true" role="dialog">
+      <div class="modal-card auth-card">
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="login" type="button">Login</button>
+          <button class="auth-tab" data-tab="signup" type="button">Sign Up</button>
+        </div>
+
+        <div id="authError" class="auth-error hidden">Invalid username or password</div>
+
+        <form id="loginForm" class="auth-form active">
+          <div class="field-group">
+            <label for="loginUsername">Username</label>
+            <input id="loginUsername" type="text" placeholder="Enter username" />
+          </div>
+          <div class="field-group">
+            <label for="loginPassword">Password</label>
+            <input id="loginPassword" type="password" placeholder="Enter password" />
+          </div>
+          <button id="fillDemoCredentialsBtn" type="button" class="secondary-btn">Fill Demo Credentials</button>
+          <button type="submit" class="primary-btn auth-submit">Login</button>
+        </form>
+
+        <form id="signupForm" class="auth-form">
+          <div class="field-group">
+            <label for="signupUsername">New Username</label>
+            <input id="signupUsername" type="text" placeholder="Create username" />
+          </div>
+          <div class="field-group">
+            <label for="signupPassword">New Password</label>
+            <input id="signupPassword" type="password" placeholder="Create password" />
+          </div>
+          <button type="submit" class="primary-btn auth-submit">Create Account</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="scanModal" class="modal hidden" aria-modal="true" role="dialog">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Scan item</h3>
+          <button id="closeModalBtn" class="close-btn" aria-label="Close scan modal">×</button>
+        </div>
+        <div class="scanner-surface">
+          <div class="scan-frame">
+            <div class="scanner-line"></div>
+          </div>
+        </div>
+        <div class="scan-result">
+          <span>Detected</span>
+          <strong id="scanResultText">Plastic bottle</strong>
+        </div>
+        <button id="scanActionBtn" class="primary-btn">Identify material</button>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
