@@ -1,9 +1,30 @@
-const streetData = {
-  '5th Avenue': { aqi: 68, pm25: 32, pm10: 48, no2: 26 },
-  'Central Park West': { aqi: 52, pm25: 24, pm10: 35, no2: 19 },
-  'Main Street': { aqi: 101, pm25: 58, pm10: 71, no2: 42 },
-  'Riverside Blvd': { aqi: 44, pm25: 18, pm10: 28, no2: 15 }
+const AQHI_DATA_URL = 'https://dashboard.data.gov.hk/api/aqhi-individual?format=json';
+const POLLUTANT_DATA_URL = 'https://www.aqhi.gov.hk/epd/ddata/html/out/24pc_Eng.xml';
+const DEFAULT_AQHI_STATION = 'Central';
+
+const fallbackStationData = [
+  { station: 'Central', aqhi: 3, health_risk: 'Low' },
+  { station: 'Central/Western', aqhi: 3, health_risk: 'Low' },
+  { station: 'Causeway Bay', aqhi: 3, health_risk: 'Low' },
+  { station: 'Eastern', aqhi: 4, health_risk: 'Moderate' },
+  { station: 'Kwai Chung', aqhi: 3, health_risk: 'Low' },
+  { station: 'Mong Kok', aqhi: 4, health_risk: 'Moderate' },
+  { station: 'Sha Tin', aqhi: 3, health_risk: 'Low' },
+  { station: 'Tseung Kwan O', aqhi: 2, health_risk: 'Low' }
+];
+
+const fallbackPollutantData = {
+  Central: { pm25: 23.2, pm10: 29.3, no2: 32.6 },
+  'Central/Western': { pm25: 23.2, pm10: 29.3, no2: 32.6 },
+  'Causeway Bay': { pm25: 18.4, pm10: 25.1, no2: 22.0 },
+  Eastern: { pm25: 27.5, pm10: 33.8, no2: 30.1 },
+  'Kwai Chung': { pm25: 24.7, pm10: 38.2, no2: 29.9 },
+  'Mong Kok': { pm25: 26.5, pm10: 31.8, no2: 27.4 },
+  'Sha Tin': { pm25: 22.8, pm10: 26.7, no2: 24.6 },
+  'Tseung Kwan O': { pm25: 19.5, pm10: 23.1, no2: 18.9 }
 };
+
+let airQualityStationCache = [...fallbackStationData];
 
 const materialGuide = {
   'Plastic #1': 'Rinse PET containers and place in the clear plastic stream. Avoid lids and labels if local rules require separating them.',
@@ -28,6 +49,9 @@ const SIGNUP_STORAGE_KEY = 'ecopulseDemoCredentials';
 const STORAGE_KEY = 'ecopulse-daily-totals';
 const THEME_STORAGE_KEY = 'ecopulseTheme';
 const FONT_SIZE_STORAGE_KEY = 'ecopulseFontSize';
+const WASTE_MODEL_URL = 'https://teachablemachine.withgoogle.com/models/azyOS7fIG/';
+
+let wasteModel = null;
 
 const streetSelect = document.getElementById('streetSelect');
 const aqiValue = document.getElementById('aqiValue');
@@ -87,15 +111,173 @@ const fontSizeSelector = document.getElementById('fontSizeSelector');
 const authNotice = document.getElementById('authNotice');
 const authNoticeText = document.getElementById('authNoticeText');
 const authNoticeClose = document.getElementById('authNoticeClose');
+const wasteImageInput = document.getElementById('wasteImageInput');
+const wastePreview = document.getElementById('wastePreview');
+const wastePreviewPlaceholder = document.getElementById('wastePreviewPlaceholder');
+const wasteManualSelect = document.getElementById('wasteManualSelect');
+const wasteStatus = document.getElementById('wasteStatus');
+const wasteGuidance = document.getElementById('wasteGuidance');
 
-function getAqiStatus(aqi) {
-  if (aqi <= 50) {
-    return { label: 'Good', className: 'good' };
+function normalizeStationName(name) {
+  return String(name || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '');
+}
+
+function getAqiStatus(aqi, healthRisk) {
+  const normalizedHealthRisk = typeof healthRisk === 'string' ? healthRisk.trim() : '';
+  if (normalizedHealthRisk) {
+    return { label: normalizedHealthRisk, className: getAqiBadgeClass(aqi) };
   }
-  if (aqi <= 100) {
-    return { label: 'Moderate', className: 'moderate' };
+
+  if (aqi <= 3) {
+    return { label: 'Low', className: getAqiBadgeClass(aqi) };
   }
-  return { label: 'Unhealthy', className: 'unhealthy' };
+  if (aqi <= 6) {
+    return { label: 'Moderate', className: getAqiBadgeClass(aqi) };
+  }
+  if (aqi <= 9) {
+    return { label: 'High', className: getAqiBadgeClass(aqi) };
+  }
+  return { label: 'Serious', className: getAqiBadgeClass(aqi) };
+}
+
+function getAqiBadgeClass(aqi) {
+  if (aqi <= 3) return 'bg-emerald-500 text-white';
+  if (aqi <= 6) return 'bg-amber-500 text-white';
+  if (aqi <= 9) return 'bg-rose-500 text-white';
+  return 'bg-purple-600 text-white';
+}
+
+function getFallbackStationInfo(stationName) {
+  const normalized = normalizeStationName(stationName);
+  return airQualityStationCache.find((station) => normalizeStationName(station.station) === normalized)
+    || fallbackStationData.find((station) => normalizeStationName(station.station) === normalized)
+    || fallbackStationData[0];
+}
+
+function getFallbackPollutantData(stationName) {
+  const normalized = normalizeStationName(stationName);
+  return Object.entries(fallbackPollutantData).find(([name]) => normalizeStationName(name) === normalized)?.[1]
+    || fallbackPollutantData[DEFAULT_AQHI_STATION];
+}
+
+async function fetchAQHIStationData() {
+  try {
+    const response = await fetch(AQHI_DATA_URL, { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`AQHI request failed with status ${response.status}`);
+    }
+
+    const stations = await response.json();
+    const values = Array.isArray(stations) ? stations : [];
+
+    const sanitized = values
+      .map((station) => ({
+        station: String(station.station || station.name || 'Unknown').trim(),
+        aqhi: Number(station.aqhi) || 0,
+        health_risk: String(station.health_risk || station.healthRisk || 'Low').trim()
+      }))
+      .filter((station) => station.station && station.station !== 'Unknown');
+
+    if (!sanitized.length) {
+      throw new Error('No AQHI stations returned by the API');
+    }
+
+    return sanitized;
+  } catch (error) {
+    console.warn('Live AQHI request failed, using fallback station data.', error);
+    return [...fallbackStationData];
+  }
+}
+
+async function fetchPollutantData(stationName) {
+  try {
+    const response = await fetch(POLLUTANT_DATA_URL, { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`Pollutant feed request failed with status ${response.status}`);
+    }
+
+    const xmlText = await response.text();
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(xmlText, 'application/xml');
+    const entries = Array.from(xml.querySelectorAll('PollutantConcentration')) || [];
+
+    const normalizedStation = normalizeStationName(stationName || DEFAULT_AQHI_STATION);
+    const selectedEntry = entries.find((entry) => {
+      const stationNode = entry.querySelector('StationName');
+      const stationValue = stationNode ? stationNode.textContent : '';
+      return normalizeStationName(stationValue) === normalizedStation;
+    }) || entries[entries.length - 1];
+
+    if (!selectedEntry) {
+      throw new Error('No pollutant data available for the selected station');
+    }
+
+    const pm25 = Number.parseFloat(selectedEntry.querySelector('PM2\.5')?.textContent || selectedEntry.querySelector('PM2_5')?.textContent || '0');
+    const pm10 = Number.parseFloat(selectedEntry.querySelector('PM10')?.textContent || '0');
+    const no2 = Number.parseFloat(selectedEntry.querySelector('NO2')?.textContent || '0');
+
+    if (!Number.isFinite(pm25) || !Number.isFinite(pm10) || !Number.isFinite(no2)) {
+      throw new Error('Pollutant values were missing or invalid');
+    }
+
+    return { pm25, pm10, no2 };
+  } catch (error) {
+    console.warn('Live pollutant data unavailable, using realistic fallback values.', error);
+    return getFallbackPollutantData(stationName);
+  }
+}
+
+function populateStationOptions(stations) {
+  if (!streetSelect) return;
+
+  const uniqueStations = Array.from(new Map(
+    stations.map((station) => [normalizeStationName(station.station), station])
+  ).values());
+
+  streetSelect.innerHTML = uniqueStations
+    .map((station) => `<option value="${station.station}">${station.station}</option>`)
+    .join('');
+
+  const preferredStation = uniqueStations.find((station) => normalizeStationName(station.station) === normalizeStationName(DEFAULT_AQHI_STATION))
+    || uniqueStations[0];
+
+  if (preferredStation) {
+    streetSelect.value = preferredStation.station;
+  }
+}
+
+function applyAirQualityData(stationData, pollutantData) {
+  const safeStation = stationData && stationData.station ? stationData.station : DEFAULT_AQHI_STATION;
+  const safeAqhi = Number.isFinite(Number(stationData?.aqhi)) ? Number(stationData.aqhi) : 3;
+  const healthRisk = stationData?.health_risk || getAqiStatus(safeAqhi).label;
+  const status = getAqiStatus(safeAqhi, healthRisk);
+  const safePollutants = pollutantData || { pm25: 23.2, pm10: 29.3, no2: 32.6 };
+
+  if (streetSelect) {
+    streetSelect.value = safeStation;
+  }
+
+  aqiValue.textContent = safeAqhi;
+  aqiStatus.textContent = status.label;
+  aqiStatus.className = `status-badge ${status.className}`;
+  pm25Value.textContent = `${safePollutants.pm25.toFixed(1)} µg/m³`;
+  pm10Value.textContent = `${safePollutants.pm10.toFixed(1)} µg/m³`;
+  no2Value.textContent = `${safePollutants.no2.toFixed(1)} µg/m³`;
+
+  pm25Bar.style.width = `${Math.min(100, (safePollutants.pm25 / 80) * 100)}%`;
+  pm10Bar.style.width = `${Math.min(100, (safePollutants.pm10 / 100) * 100)}%`;
+  no2Bar.style.width = `${Math.min(100, (safePollutants.no2 / 50) * 100)}%`;
+
+  heroScore.textContent = safeAqhi;
+
+  const scoreBadge = document.querySelector('#dashboardOverview .col-span-3 .rounded-full');
+  if (scoreBadge) {
+    scoreBadge.className = `rounded-full px-2 py-1 text-[10px] font-semibold ${status.className}`;
+    scoreBadge.textContent = status.label;
+  }
 }
 
 function getAuthState() {
@@ -273,24 +455,19 @@ function requireLoginForAction(actionLabel = 'save your changes') {
   return false;
 }
 
-function updateAirQuality() {
-  const selectedStreet = streetSelect.value;
-  const data = streetData[selectedStreet];
-  const status = getAqiStatus(data.aqi);
+async function updateAirQuality() {
+  if (!streetSelect) return;
 
-  aqiValue.textContent = data.aqi;
-  aqiStatus.textContent = status.label;
-  aqiStatus.className = `status-badge ${status.className}`;
-  pm25Value.textContent = data.pm25;
-  pm10Value.textContent = data.pm10;
-  no2Value.textContent = data.no2;
+  const selectedStation = streetSelect.value || DEFAULT_AQHI_STATION;
+  airQualityStationCache = await fetchAQHIStationData();
+  populateStationOptions(airQualityStationCache);
 
-  pm25Bar.style.width = `${Math.min(100, (data.pm25 / 80) * 100)}%`;
-  pm10Bar.style.width = `${Math.min(100, (data.pm10 / 100) * 100)}%`;
-  no2Bar.style.width = `${Math.min(100, (data.no2 / 50) * 100)}%`;
+  const stationData = getFallbackStationInfo(selectedStation);
+  const liveStation = airQualityStationCache.find((station) => normalizeStationName(station.station) === normalizeStationName(selectedStation))
+    || stationData;
 
-  const overallScore = Math.max(40, 100 - data.aqi + 20);
-  heroScore.textContent = Math.round(overallScore);
+  const pollutantData = await fetchPollutantData(liveStation.station);
+  applyAirQualityData(liveStation, pollutantData);
 }
 
 function calculateCarbonFootprint() {
@@ -453,8 +630,132 @@ function scheduleActiveNavUpdate() {
   });
 }
 
+function getWasteGuidanceText(selectedClass) {
+  const matched = {
+    'Plastic Bottle': 'Blue Bin (Plastics) — Rinse, crush, and leave cap on.',
+    'Aluminium Can': 'Yellow Bin (Metals) — Empty liquids; 100% infinitely recyclable.',
+    Paper: 'Blue Bin (Paper) — Keep dry and unflattened.',
+    Battery: 'Hazardous Waste / E-Waste Drop-off — Never put in standard recycling.'
+  };
+
+  return matched[selectedClass] || 'Blue Bin (Plastics) — Rinse, crush, and leave cap on.';
+}
+
+function updateWasteGuidance(selectedClass) {
+  if (!wasteGuidance) return;
+  wasteGuidance.textContent = getWasteGuidanceText(selectedClass);
+}
+
+function setWasteStatus(message) {
+  if (!wasteStatus) return;
+  wasteStatus.textContent = message;
+}
+
+async function loadWasteModel() {
+  if (wasteModel) {
+    return wasteModel;
+  }
+
+  if (!window.tf || !window.tmImage) {
+    throw new Error('TensorFlow libraries are not available yet.');
+  }
+
+  wasteModel = await tmImage.load(WASTE_MODEL_URL + 'model.json', WASTE_MODEL_URL + 'metadata.json');
+  return wasteModel;
+}
+
+function normalizeWasteClassName(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function mapWastePrediction(name) {
+  const normalized = normalizeWasteClassName(name);
+
+  if (normalized.includes('plastic')) return 'Plastic Bottle';
+  if (normalized.includes('aluminum') || normalized.includes('aluminium') || normalized.includes('can')) return 'Aluminium Can';
+  if (normalized.includes('paper')) return 'Paper';
+  if (normalized.includes('battery')) return 'Battery';
+
+  return 'Paper';
+}
+
+async function handleWasteImageUpload(event) {
+  const file = event.target?.files?.[0];
+  if (!file || !wastePreview || !wasteManualSelect) return;
+
+  const objectUrl = URL.createObjectURL(file);
+  wastePreview.src = objectUrl;
+  wastePreview.classList.remove('hidden');
+  wastePreviewPlaceholder.classList.add('hidden');
+
+  try {
+    const model = await loadWasteModel();
+    const img = document.createElement('img');
+    img.src = objectUrl;
+    img.crossOrigin = 'anonymous';
+    await img.decode();
+
+    const prediction = await model.predict(img);
+    const sortedPredictions = Array.isArray(prediction)
+      ? [...prediction].sort((a, b) => Number(b.probability || 0) - Number(a.probability || 0))
+      : [];
+    const topPrediction = sortedPredictions[0] || null;
+    const predictedClass = mapWastePrediction(topPrediction?.className || 'Paper');
+    const confidence = Number(topPrediction?.probability || 0);
+
+    if (!topPrediction || confidence <= 0 || confidence < 0.6) {
+      setWasteStatus('AI confidence is too low for this item. Please verify the material manually.');
+      return;
+    }
+
+    wasteManualSelect.value = predictedClass;
+    updateWasteGuidance(predictedClass);
+    setWasteStatus(`AI identified ${predictedClass} (${(confidence * 100).toFixed(0)}% confidence).`);
+  } catch (error) {
+    console.warn('Waste model classification failed:', error);
+    setWasteStatus('AI model unavailable. Please select the material manually.');
+  }
+}
+
+function initializeWasteScanner() {
+  if (!wasteManualSelect || !wasteGuidance) return;
+
+  wasteManualSelect.value = 'Paper';
+  updateWasteGuidance('Paper');
+  setWasteStatus('Awaiting image analysis');
+
+  if (wasteImageInput) {
+    wasteImageInput.addEventListener('change', handleWasteImageUpload);
+  }
+
+  if (wasteManualSelect) {
+    wasteManualSelect.addEventListener('change', (event) => {
+      const selectedClass = event.target.value;
+      updateWasteGuidance(selectedClass);
+      setWasteStatus(`Manual override selected: ${selectedClass}`);
+    });
+  }
+
+  loadWasteModel().catch((error) => {
+    console.warn('Waste model load failed on init:', error);
+  });
+}
+
 function attachEvents() {
-  streetSelect.addEventListener('change', updateAirQuality);
+  if (streetSelect) {
+    streetSelect.addEventListener('change', async () => {
+      const selectedStation = streetSelect.value || DEFAULT_AQHI_STATION;
+      const liveStation = airQualityStationCache.find((station) => normalizeStationName(station.station) === normalizeStationName(selectedStation))
+        || getFallbackStationInfo(selectedStation);
+      const pollutantData = await fetchPollutantData(liveStation.station);
+      applyAirQualityData(liveStation, pollutantData);
+    });
+  }
 
   [commuteRange, energyRange, meatRange].forEach((slider) => {
     slider.addEventListener('input', calculateCarbonFootprint);
@@ -606,12 +907,18 @@ function handleFontSizeChange(size) {
   });
 }
 
-function init() {
+async function init() {
   initTheme();
   initFontSize();
   attachEvents();
   renderAuthState();
-  updateAirQuality();
+  initializeWasteScanner();
+  airQualityStationCache = await fetchAQHIStationData();
+  populateStationOptions(airQualityStationCache);
+  const initialStation = streetSelect ? streetSelect.value || DEFAULT_AQHI_STATION : DEFAULT_AQHI_STATION;
+  const initialRecord = getFallbackStationInfo(initialStation);
+  const initialPollutants = await fetchPollutantData(initialRecord.station);
+  applyAirQualityData(initialRecord, initialPollutants);
   calculateCarbonFootprint();
   renderHistory();
   renderDropoffs();

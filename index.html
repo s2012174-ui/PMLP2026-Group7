@@ -6,6 +6,8 @@
     <title>EcoPulse</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.5/dist/teachablemachine-image.min.js"></script>
     <script>
       tailwind.config = {
         darkMode: 'class',
@@ -526,6 +528,48 @@
                       </select>
                     </div>
                     <div id="materialInfo" class="mt-4 rounded-xl bg-white/5 p-3 text-sm text-slate-200"></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="col-span-12 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-[10px] uppercase tracking-[0.22em] text-slate-500">Waste scanner</p>
+                  <h3 class="mt-1 text-2xl font-bold text-slate-900">Client-side classification</h3>
+                </div>
+                <span class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">AI + manual override</span>
+              </div>
+
+              <div class="mt-6 grid gap-6 lg:grid-cols-2">
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <label for="wasteImageInput" class="mb-3 block text-sm font-semibold text-slate-700">Upload item image</label>
+                  <input id="wasteImageInput" type="file" accept="image/*" class="block w-full rounded-xl border border-dashed border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white" />
+
+                  <div class="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                    <img id="wastePreview" alt="Waste preview" class="hidden h-64 w-full object-cover" />
+                    <div id="wastePreviewPlaceholder" class="flex h-64 items-center justify-center text-sm text-slate-500">No image selected</div>
+                  </div>
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <label for="wasteManualSelect" class="mb-3 block text-sm font-semibold text-slate-700">Select material</label>
+                  <select id="wasteManualSelect" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-emerald-400">
+                    <option value="Paper">Paper</option>
+                    <option value="Aluminium Can">Aluminium Can</option>
+                    <option value="Plastic Bottle">Plastic Bottle</option>
+                    <option value="Battery">Battery</option>
+                  </select>
+
+                  <div class="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                    <p class="text-[10px] uppercase tracking-[0.18em] text-emerald-700">Status</p>
+                    <p id="wasteStatus" class="mt-2 text-sm font-medium text-slate-700">Awaiting image analysis</p>
+                  </div>
+
+                  <div class="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+                    <p class="text-[10px] uppercase tracking-[0.18em] text-slate-500">Disposal guidance</p>
+                    <p id="wasteGuidance" class="mt-2 text-sm leading-6 text-slate-700">Choose a material to see accurate disposal instructions.</p>
                   </div>
                 </div>
               </div>
