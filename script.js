@@ -63,6 +63,9 @@ const pm25Bar = document.getElementById('pm25Bar');
 const pm10Bar = document.getElementById('pm10Bar');
 const no2Bar = document.getElementById('no2Bar');
 const heroScore = document.getElementById('heroScore');
+const airParticleCanvas = document.getElementById('air-particle-canvas');
+let airParticles = [];
+let airParticleAnimationId = null;
 
 const commuteRange = document.getElementById('commuteRange');
 const energyRange = document.getElementById('energyRange');
@@ -249,6 +252,122 @@ function populateStationOptions(stations) {
   }
 }
 
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function parsePollutantValue(value) {
+  const parsed = Number.parseFloat(String(value || '0').replace(/[^\d.-]/g, ''));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function buildAirParticles() {
+  if (!airParticleCanvas) return;
+
+  const canvas = airParticleCanvas;
+  const rect = canvas.getBoundingClientRect();
+  const width = Math.max(1, rect.width || 320);
+  const height = Math.max(1, rect.height || 240);
+
+  const pm25ValueNumber = parsePollutantValue(pm25Value?.textContent || '0');
+  const pm10ValueNumber = parsePollutantValue(pm10Value?.textContent || '0');
+  const pm25Count = clamp(Math.floor(pm25ValueNumber / 5), 2, 10);
+  const pm10Count = clamp(Math.floor(pm10ValueNumber / 10), 1, 6);
+
+  airParticles = [];
+
+  for (let i = 0; i < pm25Count; i += 1) {
+    airParticles.push({
+      type: 'pm25',
+      x: Math.random() * width,
+      y: Math.random() * height,
+      radius: 14 + Math.random() * 6,
+      vx: (Math.random() - 0.5) * 0.9,
+      vy: (Math.random() - 0.5) * 0.7,
+      label: 'PM2.5'
+    });
+  }
+
+  for (let i = 0; i < pm10Count; i += 1) {
+    airParticles.push({
+      type: 'pm10',
+      x: Math.random() * width,
+      y: Math.random() * height,
+      radius: 28 + Math.random() * 10,
+      vx: (Math.random() - 0.5) * 0.8,
+      vy: (Math.random() - 0.5) * 0.6,
+      label: 'PM10'
+    });
+  }
+}
+
+function renderAirParticles() {
+  if (!airParticleCanvas) return;
+
+  const canvas = airParticleCanvas;
+  const context = canvas.getContext('2d');
+  if (!context) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const width = Math.max(1, rect.width || 320);
+  const height = Math.max(1, rect.height || 240);
+  const ratio = window.devicePixelRatio || 1;
+
+  canvas.width = width * ratio;
+  canvas.height = height * ratio;
+  context.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+  buildAirParticles();
+
+  const draw = () => {
+    context.clearRect(0, 0, width, height);
+
+    const glow = context.createRadialGradient(width * 0.5, height * 0.5, 0, width * 0.5, height * 0.5, width * 0.7);
+    glow.addColorStop(0, 'rgba(16, 185, 129, 0.22)');
+    glow.addColorStop(0.5, 'rgba(14, 165, 233, 0.10)');
+    glow.addColorStop(1, 'rgba(17, 24, 39, 0)');
+    context.fillStyle = glow;
+    context.fillRect(0, 0, width, height);
+
+    for (const particle of airParticles) {
+      particle.x += particle.vx;
+      particle.y += particle.vy;
+
+      if (particle.x < particle.radius || particle.x > width - particle.radius) {
+        particle.vx *= -1;
+        particle.x = clamp(particle.x, particle.radius, width - particle.radius);
+      }
+
+      if (particle.y < particle.radius || particle.y > height - particle.radius) {
+        particle.vy *= -1;
+        particle.y = clamp(particle.y, particle.radius, height - particle.radius);
+      }
+
+      context.beginPath();
+      context.fillStyle = particle.type === 'pm25' ? '#FACC15' : '#EF4444';
+      context.shadowBlur = particle.type === 'pm25' ? 18 : 24;
+      context.shadowColor = particle.type === 'pm25' ? 'rgba(250, 204, 21, 0.8)' : 'rgba(239, 68, 68, 0.8)';
+      context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+      context.fill();
+
+      context.shadowBlur = 0;
+      context.fillStyle = '#111827';
+      context.font = 'bold 10px sans-serif';
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.fillText(particle.label, particle.x, particle.y + 1);
+    }
+
+    airParticleAnimationId = window.requestAnimationFrame(draw);
+  };
+
+  if (airParticleAnimationId) {
+    window.cancelAnimationFrame(airParticleAnimationId);
+  }
+
+  draw();
+}
+
 function applyAirQualityData(stationData, pollutantData) {
   const safeStation = stationData && stationData.station ? stationData.station : DEFAULT_AQHI_STATION;
   const safeAqhi = Number.isFinite(Number(stationData?.aqhi)) ? Number(stationData.aqhi) : 3;
@@ -278,6 +397,8 @@ function applyAirQualityData(stationData, pollutantData) {
     scoreBadge.className = `rounded-full px-2 py-1 text-[10px] font-semibold ${status.className}`;
     scoreBadge.textContent = status.label;
   }
+
+  renderAirParticles();
 }
 
 function getAuthState() {
@@ -755,6 +876,10 @@ function attachEvents() {
       const pollutantData = await fetchPollutantData(liveStation.station);
       applyAirQualityData(liveStation, pollutantData);
     });
+  }
+
+  if (airParticleCanvas) {
+    window.addEventListener('resize', renderAirParticles);
   }
 
   [commuteRange, energyRange, meatRange].forEach((slider) => {
