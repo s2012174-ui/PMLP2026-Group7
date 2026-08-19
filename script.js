@@ -51,9 +51,12 @@ const SIGNUP_STORAGE_KEY = 'ecopulseDemoCredentials';
 const STORAGE_KEY = 'ecopulse-daily-totals';
 const THEME_STORAGE_KEY = 'ecopulseTheme';
 const FONT_SIZE_STORAGE_KEY = 'ecopulseFontSize';
+const GREEN_POINTS_STORAGE_KEY = 'greenPoints';
 const WASTE_MODEL_URL = 'https://teachablemachine.withgoogle.com/models/azyOS7fIG/';
 
 let wasteModel = null;
+let greenPoints = Number(localStorage.getItem(GREEN_POINTS_STORAGE_KEY) || 0);
+let hasRedeemedForCurrentUpload = false;
 
 const ecoGuideFab = document.getElementById('ecoGuideFab');
 const ecoGuidePanel = document.getElementById('ecoGuidePanel');
@@ -133,6 +136,8 @@ const wastePreviewPlaceholder = document.getElementById('wastePreviewPlaceholder
 const wasteManualSelect = document.getElementById('wasteManualSelect');
 const wasteStatus = document.getElementById('wasteStatus');
 const wasteGuidance = document.getElementById('wasteGuidance');
+const redeemPointsBtn = document.getElementById('redeem-points-btn');
+const pointsDisplay = document.getElementById('points-display');
 
 function normalizeStationName(name) {
   return String(name || '')
@@ -854,6 +859,41 @@ function setWasteStatus(message) {
   wasteStatus.textContent = message;
 }
 
+function animateCountUp(element, startVal, endVal, duration) {
+  if (!element) return;
+
+  const startTime = performance.now();
+
+  function tick(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const currentValue = Math.round(startVal + (endVal - startVal) * eased);
+    element.textContent = currentValue;
+
+    if (progress < 1) {
+      requestAnimationFrame(tick);
+    } else {
+      element.textContent = endVal;
+    }
+  }
+
+  requestAnimationFrame(tick);
+}
+
+function updatePointsUI() {
+  const display = document.getElementById('points-display');
+  if (!display) return;
+
+  const currentValue = Number(display.dataset.value || greenPoints || 0);
+  display.dataset.value = String(greenPoints);
+  display.textContent = String(greenPoints);
+
+  if (Number.isFinite(currentValue) && currentValue !== greenPoints) {
+    animateCountUp(display, currentValue, greenPoints, 1500);
+  }
+}
+
 async function loadWasteModel() {
   if (wasteModel) {
     return wasteModel;
@@ -890,6 +930,13 @@ function mapWastePrediction(name) {
 async function handleWasteImageUpload(event) {
   const file = event.target?.files?.[0];
   if (!file || !wastePreview || !wasteManualSelect) return;
+
+  hasRedeemedForCurrentUpload = false;
+
+  if (redeemPointsBtn) {
+    redeemPointsBtn.disabled = false;
+    redeemPointsBtn.classList.remove('hidden');
+  }
 
   const objectUrl = URL.createObjectURL(file);
   wastePreview.src = objectUrl;
@@ -928,6 +975,30 @@ async function handleWasteImageUpload(event) {
 function initializeWasteScanner() {
   if (!wasteManualSelect || !wasteGuidance) return;
 
+  if (redeemPointsBtn) {
+    redeemPointsBtn.classList.add('hidden');
+    redeemPointsBtn.disabled = true;
+    redeemPointsBtn.addEventListener('click', () => {
+      if (hasRedeemedForCurrentUpload) {
+        return;
+      }
+
+      const previousPoints = greenPoints;
+      hasRedeemedForCurrentUpload = true;
+      greenPoints += 100;
+      localStorage.setItem(GREEN_POINTS_STORAGE_KEY, String(greenPoints));
+
+      redeemPointsBtn.classList.add('hidden');
+      redeemPointsBtn.disabled = true;
+
+      const display = document.getElementById('points-display');
+      if (display) {
+        animateCountUp(display, previousPoints, greenPoints, 1500);
+        display.dataset.value = String(greenPoints);
+      }
+    });
+  }
+
   wasteManualSelect.value = 'Paper';
   updateWasteGuidance('Paper');
   setWasteStatus('Awaiting image analysis');
@@ -947,6 +1018,7 @@ function initializeWasteScanner() {
   loadWasteModel().catch((error) => {
     console.warn('Waste model load failed on init:', error);
   });
+  updatePointsUI();
 }
 
 function attachEvents() {

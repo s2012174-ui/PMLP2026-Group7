@@ -433,6 +433,80 @@ button, input, select {
   color: #0f172a;
 }
 
+.points-container {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.9rem 0.7rem 0.75rem;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.28);
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.points-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.26), rgba(52, 211, 153, 0.12));
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  box-shadow: inset 0 0 18px rgba(52, 211, 153, 0.18);
+  font-size: 1rem;
+}
+
+.points-text {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.points-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(226, 232, 240, 0.82);
+}
+
+#points-display {
+  font-size: 1.1rem;
+  line-height: 1;
+  color: #a7f3d0;
+}
+
+#redeem-points-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 16px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10b981, #14b8a6);
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 14px 24px rgba(16, 185, 129, 0.22);
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+#redeem-points-btn:hover,
+#redeem-points-btn:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 30px rgba(16, 185, 129, 0.28);
+  outline: none;
+}
+
 .hidden {
   display: none !important;
 }

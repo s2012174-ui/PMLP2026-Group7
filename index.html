@@ -86,6 +86,14 @@
         </nav>
       </header>
 
+      <div id="points-container" class="points-container" aria-live="polite">
+        <div class="points-icon" aria-hidden="true">🌱</div>
+        <div class="points-text">
+          <span class="points-label">Green Points</span>
+          <strong id="points-display">0</strong>
+        </div>
+      </div>
+
       <main>
         <section id="home" class="relative overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-sky-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
           <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.15),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(14,165,233,0.12),_transparent_30%)]"></div>
@@ -176,6 +184,7 @@
                       <div class="h-full w-[74%] rounded-full bg-gradient-to-r from-emerald-400 to-emerald-300"></div>
                     </div>
                   </div>
+
                 </div>
               </div>
             </div>
@@ -482,7 +491,7 @@
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-[10px] uppercase tracking-[0.22em] text-slate-500">Waste scanner</p>
-                  <h3 class="mt-1 text-2xl font-bold text-slate-900">Client-side classification</h3>
+                  <h3 class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">Client-side classification</h3>
                 </div>
                 <span class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">AI + manual override</span>
               </div>
@@ -518,6 +527,8 @@
                   </div>
                 </div>
               </div>
+
+              <button id="redeem-points-btn" class="hidden mt-5">Redeem Points</button>
             </section>
           </div>
         </section>
