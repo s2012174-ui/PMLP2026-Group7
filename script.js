@@ -75,6 +75,7 @@ const heroScore = document.getElementById('heroScore');
 const urbanAqhiValue = document.getElementById('urbanAqhiValue');
 const urbanHumidityValue = document.getElementById('urbanHumidityValue');
 const urbanUvValue = document.getElementById('urbanUvValue');
+const urbanTemperatureValue = document.getElementById('urbanTemperatureValue');
 const airParticleCanvas = document.getElementById('air-particle-canvas');
 let airParticles = [];
 let airParticleAnimationId = null;
@@ -232,7 +233,7 @@ function collectAqhiValues(value, results = []) {
 }
 
 async function fetchUrbanSignals() {
-  const fallbackSignals = { aqhi: 3, humidity: 62, uvIndex: 0 };
+  const fallbackSignals = { aqhi: 3, humidity: 62, uvIndex: 0, temperature: '--' };
   const signals = { ...fallbackSignals };
 
   try {
@@ -253,13 +254,19 @@ async function fetchUrbanSignals() {
     const weather = await response.json();
     const humidityValue = weather?.humidity?.data?.[0]?.value;
     const uvValue = weather?.uvindex?.data?.[0]?.value;
+    const temperatureData = Array.isArray(weather?.temperature?.data) ? weather.temperature.data : [];
+    const temperatureReading = temperatureData.find((reading) => reading?.place === 'Hong Kong Observatory')
+      || temperatureData[0];
+    const temperatureValue = temperatureReading?.value;
     const humidity = Number(humidityValue);
     const uvIndex = Number(uvValue);
+    const temperature = Number(temperatureValue);
 
     if (humidityValue !== null && humidityValue !== undefined && Number.isFinite(humidity)) {
       signals.humidity = humidity;
     }
     if (Number.isFinite(uvIndex)) signals.uvIndex = uvIndex;
+    if (Number.isFinite(temperature)) signals.temperature = temperature;
   } catch (error) {
     console.warn('HKO weather signals unavailable, using fallback values.', error);
   }
@@ -267,6 +274,7 @@ async function fetchUrbanSignals() {
   if (urbanAqhiValue) urbanAqhiValue.textContent = String(signals.aqhi);
   if (urbanHumidityValue) urbanHumidityValue.textContent = String(signals.humidity);
   if (urbanUvValue) urbanUvValue.textContent = String(signals.uvIndex);
+  if (urbanTemperatureValue) urbanTemperatureValue.textContent = String(signals.temperature);
 }
 
 async function fetchPollutantData(stationName) {
