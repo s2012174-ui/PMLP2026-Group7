@@ -378,3 +378,246 @@ button, input, select {
     width: 220px;
   }
 }
+
+.eco-guide-fab {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 70;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #10b981, #14b8a6);
+  color: white;
+  padding: 18px;
+  box-shadow: 0 20px 40px rgba(16, 185, 129, 0.32);
+  cursor: pointer;
+  font-weight: 700;
+  transition: opacity 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+
+.eco-guide-fab--hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.35);
+}
+
+.eco-guide-fab:hover,
+.eco-guide-fab:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 24px 46px rgba(16, 185, 129, 0.38);
+  outline: none;
+}
+
+.eco-guide-fab__icon {
+  font-size: 1.1rem;
+}
+
+.eco-guide-fab__icon img {
+  display: block;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+
+.eco-guide-fab__label {
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+}
+
+.eco-guide-panel {
+  position: fixed;
+  right: 18px;
+  bottom: 90px;
+  z-index: 69;
+  width: min(92vw, 380px);
+  max-height: 62vh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+
+.dark .eco-guide-panel {
+  background: rgba(15, 23, 42, 0.96);
+  border-color: rgba(148, 163, 184, 0.2);
+  box-shadow: 0 25px 60px rgba(2, 6, 23, 0.48);
+}
+
+.eco-guide-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 16px 12px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(20, 184, 166, 0.08));
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.eco-guide-header__eyebrow {
+  margin: 0 0 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #047857;
+}
+
+.dark .eco-guide-header__eyebrow {
+  color: #86efac;
+}
+
+.eco-guide-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.dark .eco-guide-header h3 {
+  color: #f8fafc;
+}
+
+.eco-guide-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.06);
+  color: #0f172a;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.dark .eco-guide-close {
+  background: rgba(148, 163, 184, 0.12);
+  color: #e2e8f0;
+}
+
+.eco-guide-messages {
+  flex: 1;
+  padding: 14px 14px 10px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(248, 250, 252, 0.7);
+}
+
+.dark .eco-guide-messages {
+  background: rgba(15, 23, 42, 0.7);
+}
+
+.eco-guide-message {
+  display: flex;
+}
+
+.eco-guide-message--user {
+  justify-content: flex-end;
+}
+
+.eco-guide-message__bubble {
+  max-width: 85%;
+  padding: 10px 12px;
+  border-radius: 16px;
+  line-height: 1.45;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+}
+
+.eco-guide-message--bot .eco-guide-message__bubble {
+  background: rgba(16, 185, 129, 0.1);
+  color: #0f172a;
+  border-top-left-radius: 6px;
+}
+
+.dark .eco-guide-message--bot .eco-guide-message__bubble {
+  background: rgba(16, 185, 129, 0.14);
+  color: #e2e8f0;
+}
+
+.eco-guide-message--user .eco-guide-message__bubble {
+  background: linear-gradient(135deg, #10b981, #14b8a6);
+  color: white;
+  border-top-right-radius: 6px;
+}
+
+.eco-guide-message--loading .eco-guide-message__bubble {
+  background: rgba(71, 85, 105, 0.08);
+  color: #475569;
+}
+
+.dark .eco-guide-message--loading .eco-guide-message__bubble {
+  background: rgba(148, 163, 184, 0.12);
+  color: #e2e8f0;
+}
+
+.eco-guide-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px 14px;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.dark .eco-guide-input-wrap {
+  background: rgba(15, 23, 42, 0.86);
+}
+
+.eco-guide-input-wrap input {
+  flex: 1;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.8);
+  padding: 11px 14px;
+  color: #0f172a;
+  outline: none;
+}
+
+.dark .eco-guide-input-wrap input {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(148, 163, 184, 0.24);
+  color: #f8fafc;
+}
+
+.eco-guide-input-wrap input::placeholder {
+  color: #64748b;
+}
+
+.eco-guide-input-wrap button {
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #10b981, #14b8a6);
+  color: white;
+  padding: 10px 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.eco-guide-input-wrap button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+@media (max-width: 640px) {
+  .eco-guide-panel {
+    right: 12px;
+    left: 12px;
+    width: auto;
+    bottom: 82px;
+    max-height: 68vh;
+  }
+
+  .eco-guide-fab {
+    right: 12px;
+    bottom: 12px;
+    padding: 10px 16px;
+  }
+}

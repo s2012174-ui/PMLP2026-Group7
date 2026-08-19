@@ -53,6 +53,13 @@ const WASTE_MODEL_URL = 'https://teachablemachine.withgoogle.com/models/azyOS7fI
 
 let wasteModel = null;
 
+const ecoGuideFab = document.getElementById('ecoGuideFab');
+const ecoGuidePanel = document.getElementById('ecoGuidePanel');
+const ecoGuideCloseBtn = document.getElementById('ecoGuideCloseBtn');
+const ecoGuideSendBtn = document.getElementById('ecoGuideSendBtn');
+const ecoGuideInput = document.getElementById('ecoGuideInput');
+const ecoGuideMessages = document.getElementById('ecoGuideMessages');
+
 const streetSelect = document.getElementById('streetSelect');
 const aqiValue = document.getElementById('aqiValue');
 const aqiStatus = document.getElementById('aqiStatus');
@@ -978,6 +985,168 @@ function initTheme() {
   }
 }
 
+function createBotMessage(text) {
+  const row = document.createElement('div');
+  row.className = 'eco-guide-message eco-guide-message--bot';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'eco-guide-message__bubble';
+  bubble.textContent = text;
+
+  row.appendChild(bubble);
+  ecoGuideMessages.appendChild(row);
+  ecoGuideMessages.scrollTop = ecoGuideMessages.scrollHeight;
+}
+
+function createUserMessage(text) {
+  const row = document.createElement('div');
+  row.className = 'eco-guide-message eco-guide-message--user';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'eco-guide-message__bubble';
+  bubble.textContent = text;
+
+  row.appendChild(bubble);
+  ecoGuideMessages.appendChild(row);
+  ecoGuideMessages.scrollTop = ecoGuideMessages.scrollHeight;
+}
+
+function addLoadingMessage() {
+  const row = document.createElement('div');
+  row.className = 'eco-guide-message eco-guide-message--bot eco-guide-message--loading';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'eco-guide-message__bubble';
+  bubble.textContent = 'Dolphin is thinking...';
+
+  row.appendChild(bubble);
+  ecoGuideMessages.appendChild(row);
+  ecoGuideMessages.scrollTop = ecoGuideMessages.scrollHeight;
+  return row;
+}
+
+function removeLoadingMessage(messageRow) {
+  if (messageRow && messageRow.parentNode) {
+    messageRow.parentNode.removeChild(messageRow);
+  }
+}
+
+function getFallbackEcoGuideReply(prompt) {
+  const lower = prompt.toLowerCase();
+
+  if (lower.includes('recycle') || lower.includes('plastic') || lower.includes('bin')) {
+    return 'A simple rule: rinse containers, keep paper dry, and sort plastics by type. If a material is mixed or contaminated, it often can’t be recycled efficiently.';
+  }
+
+  if (lower.includes('energy') || lower.includes('electricity') || lower.includes('power')) {
+    return 'Switch to LED bulbs, unplug standby devices, and run major appliances during off-peak hours when possible. Even small habit changes add up over a month.';
+  }
+
+  if (lower.includes('transport') || lower.includes('commute') || lower.includes('car')) {
+    return 'Try combining trips, taking public transport, or walking for short errands. Cleaner commute choices can lower both emissions and local air pollution.';
+  }
+
+  if (lower.includes('water')) {
+    return 'Shorter showers, fixing leaks, and reusing greywater for plants can reduce household water waste without sacrificing comfort.';
+  }
+
+  if (lower.includes('food') || lower.includes('waste') || lower.includes('compost')) {
+    return 'Reduce food waste by planning meals, storing leftovers carefully, and composting fruit and vegetable scraps. Food waste is a major source of avoidable emissions.';
+  }
+
+  return 'A good first step is to choose one simple and realistic change: reduce single-use items, save home energy, and reuse what you can.';
+}
+
+async function fetchEcoGuideReply(prompt) {
+  try {
+    const response = await puter.ai.chat([
+      {
+        role: 'system',
+        content: 'You are Dolphin, a friendly and helpful sustainability assistant. Give practical, encouraging, actionable advice about recycling, green lifestyle habits, energy conservation, air quality, and low-effort community actions. Keep responses clear, friendly, concise, and welcoming.'
+      },
+      { role: 'user', content: prompt }
+    ]);
+    const text = response?.message?.content;
+
+    if (!text) {
+      throw new Error('No valid reply returned from Puter.js');
+    }
+
+    if (typeof text === 'string') {
+      return text.trim();
+    }
+
+    if (Array.isArray(text)) {
+      return text.map((part) => typeof part === 'string' ? part : part?.text || '').join(' ').trim();
+    }
+
+    return getFallbackEcoGuideReply(prompt);
+  } catch (error) {
+    console.warn('Puter.js chatbot unavailable, using fallback guidance.', error);
+    return getFallbackEcoGuideReply(prompt);
+  }
+}
+
+async function sendEcoGuideMessage() {
+  if (!ecoGuideInput || !ecoGuideMessages || !ecoGuideSendBtn) return;
+
+  const text = ecoGuideInput.value.trim();
+  if (!text) return;
+
+  createUserMessage(text);
+  ecoGuideInput.value = '';
+  ecoGuideSendBtn.disabled = true;
+  const loadingRow = addLoadingMessage();
+
+  try {
+    const reply = await fetchEcoGuideReply(text);
+    removeLoadingMessage(loadingRow);
+    createBotMessage(reply);
+  } catch (error) {
+    removeLoadingMessage(loadingRow);
+    createBotMessage('I’m having trouble responding right now, but a few easy green actions are: reuse what you can, save electricity, and sort waste properly.');
+  } finally {
+    ecoGuideSendBtn.disabled = false;
+    ecoGuideInput.focus();
+  }
+}
+
+function toggleEcoGuidePanel() {
+  if (!ecoGuidePanel) return;
+  const isOpening = ecoGuidePanel.classList.contains('hidden');
+  ecoGuidePanel.classList.toggle('hidden');
+  ecoGuideFab?.classList.toggle('eco-guide-fab--hidden', isOpening);
+  if (isOpening) {
+    ecoGuideInput?.focus();
+  }
+}
+
+function closeEcoGuidePanel() {
+  ecoGuidePanel?.classList.add('hidden');
+  ecoGuideFab?.classList.remove('eco-guide-fab--hidden');
+}
+
+function initializeEcoGuide() {
+  if (!ecoGuideFab || !ecoGuidePanel || !ecoGuideCloseBtn || !ecoGuideInput || !ecoGuideSendBtn) return;
+
+  ecoGuideFab.addEventListener('click', toggleEcoGuidePanel);
+  ecoGuideFab.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      toggleEcoGuidePanel();
+    }
+  });
+
+  ecoGuideCloseBtn.addEventListener('click', closeEcoGuidePanel);
+  ecoGuideSendBtn.addEventListener('click', sendEcoGuideMessage);
+  ecoGuideInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      sendEcoGuideMessage();
+    }
+  });
+}
+
 function initFontSize() {
   const stored = localStorage.getItem(FONT_SIZE_STORAGE_KEY) || 'normal';
   const sizeMap = {
@@ -1036,6 +1205,7 @@ async function init() {
   initTheme();
   initFontSize();
   attachEvents();
+  initializeEcoGuide();
   renderAuthState();
   initializeWasteScanner();
   airQualityStationCache = await fetchAQHIStationData();

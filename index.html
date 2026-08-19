@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.5/dist/teachablemachine-image.min.js"></script>
+    <script src="https://js.puter.com/v2/"></script>
     <script>
       tailwind.config = {
         darkMode: 'class',
@@ -571,7 +572,7 @@
         <div class="border-t border-slate-800">
           <div class="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-5 text-sm text-slate-500 md:flex-row md:items-center md:justify-between lg:px-8">
             <p>© 2026 EcoPulse. All rights reserved.</p>
-            <p>Built for Hackathon 2026</p>
+            <p>Built for PMLP 2026</p>
           </div>
         </div>
       </footer>
@@ -643,6 +644,31 @@
         <button id="scanActionBtn" class="primary-btn">Identify material</button>
       </div>
     </div>
+
+    <div id="ecoGuideFab" class="eco-guide-fab" aria-label="Open Dolphin chatbot" role="button" tabindex="0">
+      <span class="eco-guide-fab__icon"><img src="asset/pink_dolphin_logo.png" alt="Dolphin" /></span>
+    </div>
+
+    <aside id="ecoGuidePanel" class="eco-guide-panel hidden" aria-live="polite" aria-label="Dolphin chatbot">
+      <div class="eco-guide-header">
+        <div>
+          <p class="eco-guide-header__eyebrow">AI assistant</p>
+          <h3>Dolphin — Green Living Assistant</h3>
+        </div>
+        <button id="ecoGuideCloseBtn" type="button" class="eco-guide-close" aria-label="Close Dolphin">✕</button>
+      </div>
+
+      <div id="ecoGuideMessages" class="eco-guide-messages" aria-live="polite">
+        <div class="eco-guide-message eco-guide-message--bot">
+          <div class="eco-guide-message__bubble">Hi! I'm Dolphin 🐬. How can I assist you today?</div>
+        </div>
+      </div>
+
+      <div class="eco-guide-input-wrap">
+        <input id="ecoGuideInput" type="text" maxlength="500" placeholder="Ask Dolphin about sustainability..." aria-label="Ask Dolphin" />
+        <button id="ecoGuideSendBtn" type="button">Send</button>
+      </div>
+    </aside>
 
     <script src="script.js"></script>
   </body>
