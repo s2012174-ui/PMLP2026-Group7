@@ -1,4 +1,6 @@
 const AQHI_DATA_URL = 'https://dashboard.data.gov.hk/api/aqhi-individual?format=json';
+const URBAN_AQHI_DATA_URL = 'https://www.aqhi.gov.hk/epd/json/gene_aqhi_Eng.json';
+const HKO_WEATHER_DATA_URL = 'https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en';
 const POLLUTANT_DATA_URL = 'https://www.aqhi.gov.hk/epd/ddata/html/out/24pc_Eng.xml';
 const DEFAULT_AQHI_STATION = 'Central';
 
@@ -70,6 +72,9 @@ const pm25Bar = document.getElementById('pm25Bar');
 const pm10Bar = document.getElementById('pm10Bar');
 const no2Bar = document.getElementById('no2Bar');
 const heroScore = document.getElementById('heroScore');
+const urbanAqhiValue = document.getElementById('urbanAqhiValue');
+const urbanHumidityValue = document.getElementById('urbanHumidityValue');
+const urbanUvValue = document.getElementById('urbanUvValue');
 const airParticleCanvas = document.getElementById('air-particle-canvas');
 let airParticles = [];
 let airParticleAnimationId = null;
@@ -200,6 +205,68 @@ async function fetchAQHIStationData() {
     console.warn('Live AQHI request failed, using fallback station data.', error);
     return [...fallbackStationData];
   }
+}
+
+function collectAqhiValues(value, results = []) {
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectAqhiValues(item, results));
+    return results;
+  }
+
+  if (!value || typeof value !== 'object') return results;
+
+  Object.entries(value).forEach(([key, nestedValue]) => {
+    if (key.toLowerCase() === 'aqhi') {
+      const aqhi = Number(nestedValue);
+      if (Number.isFinite(aqhi)) {
+        results.push(aqhi);
+      } else {
+        collectAqhiValues(nestedValue, results);
+      }
+    } else {
+      collectAqhiValues(nestedValue, results);
+    }
+  });
+
+  return results;
+}
+
+async function fetchUrbanSignals() {
+  const fallbackSignals = { aqhi: 3, humidity: 62, uvIndex: 0 };
+  const signals = { ...fallbackSignals };
+
+  try {
+    const response = await fetch(URBAN_AQHI_DATA_URL, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`AQHI request failed with status ${response.status}`);
+
+    const payload = await response.json();
+    const aqhiValues = collectAqhiValues(payload);
+    if (aqhiValues.length) signals.aqhi = Math.max(...aqhiValues);
+  } catch (error) {
+    console.warn('Urban AQHI unavailable, using fallback signal.', error);
+  }
+
+  try {
+    const response = await fetch(HKO_WEATHER_DATA_URL, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`HKO weather request failed with status ${response.status}`);
+
+    const weather = await response.json();
+    const humidityValue = weather?.humidity?.data?.[0]?.value;
+    const uvValue = weather?.uvindex?.data?.[0]?.value;
+    const humidity = Number(humidityValue);
+    const uvIndex = Number(uvValue);
+
+    if (humidityValue !== null && humidityValue !== undefined && Number.isFinite(humidity)) {
+      signals.humidity = humidity;
+    }
+    if (Number.isFinite(uvIndex)) signals.uvIndex = uvIndex;
+  } catch (error) {
+    console.warn('HKO weather signals unavailable, using fallback values.', error);
+  }
+
+  if (urbanAqhiValue) urbanAqhiValue.textContent = String(signals.aqhi);
+  if (urbanHumidityValue) urbanHumidityValue.textContent = String(signals.humidity);
+  if (urbanUvValue) urbanUvValue.textContent = String(signals.uvIndex);
 }
 
 async function fetchPollutantData(stationName) {
@@ -1204,6 +1271,7 @@ function handleFontSizeChange(size) {
 async function init() {
   initTheme();
   initFontSize();
+  fetchUrbanSignals();
   attachEvents();
   initializeEcoGuide();
   renderAuthState();
