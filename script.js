@@ -76,12 +76,38 @@ const pm10Bar = document.getElementById('pm10Bar');
 const no2Bar = document.getElementById('no2Bar');
 const heroScore = document.getElementById('heroScore');
 const urbanAqhiValue = document.getElementById('urbanAqhiValue');
+const aqhiStatus = document.getElementById('aqhi-status');
 const urbanHumidityValue = document.getElementById('urbanHumidityValue');
 const urbanUvValue = document.getElementById('urbanUvValue');
 const urbanTemperatureValue = document.getElementById('urbanTemperatureValue');
 const airParticleCanvas = document.getElementById('air-particle-canvas');
 let airParticles = [];
 let airParticleAnimationId = null;
+
+function initializeScrollPath() {
+  const path = document.getElementById('scroll-path');
+  if (!path || typeof path.getTotalLength !== 'function') return;
+
+  const pathLength = path.getTotalLength();
+  const leaves = Array.from(document.querySelectorAll('.scroll-leaf'));
+  path.style.strokeDasharray = pathLength + ' ' + pathLength;
+  path.style.strokeDashoffset = pathLength;
+
+  const updateScrollPath = () => {
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    const scrollFraction = maxScroll > 0
+      ? Math.max(0, Math.min(1, scrollTop / maxScroll))
+      : 0;
+    path.style.strokeDashoffset = pathLength * (1 - scrollFraction);
+    leaves.forEach((leaf) => {
+      leaf.classList.toggle('is-visible', Number(leaf.dataset.progress) <= scrollFraction);
+    });
+  };
+
+  window.addEventListener('scroll', updateScrollPath, { passive: true });
+  updateScrollPath();
+}
 
 const commuteRange = document.getElementById('commuteRange');
 const energyRange = document.getElementById('energyRange');
@@ -277,6 +303,15 @@ async function fetchUrbanSignals() {
   }
 
   if (urbanAqhiValue) urbanAqhiValue.textContent = String(signals.aqhi);
+  if (aqhiStatus) {
+    const risk = signals.aqhi <= 3
+      ? { label: 'Low Risk', className: 'status-pill-low' }
+      : signals.aqhi <= 6
+        ? { label: 'Moderate Risk', className: 'status-pill-moderate' }
+        : { label: 'High Risk', className: 'status-pill-high' };
+    aqhiStatus.textContent = risk.label;
+    aqhiStatus.className = `status-pill ${risk.className}`;
+  }
   if (urbanHumidityValue) urbanHumidityValue.textContent = String(signals.humidity);
   if (urbanUvValue) urbanUvValue.textContent = String(signals.uvIndex);
   if (urbanTemperatureValue) urbanTemperatureValue.textContent = String(signals.temperature);
@@ -1118,7 +1153,7 @@ function initTheme() {
   const systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   const nextTheme = storedTheme || (systemPrefersDark ? 'dark' : 'light');
 
-  document.documentElement.classList.toggle('dark', nextTheme === 'dark');
+  applyThemeState(nextTheme);
   localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
 
   if (themeToggleBtn) {
@@ -1130,6 +1165,13 @@ function initTheme() {
       }
     }
   }
+}
+
+function applyThemeState(theme) {
+  const isDark = theme === 'dark';
+  document.documentElement.classList.toggle('dark', isDark);
+  document.body?.classList.toggle('dark-mode', isDark);
+  document.documentElement.dataset.theme = theme;
 }
 
 function createBotMessage(text) {
@@ -1315,7 +1357,7 @@ function initFontSize() {
 function handleThemeToggle() {
   const isDark = document.documentElement.classList.contains('dark');
   const nextTheme = isDark ? 'light' : 'dark';
-  document.documentElement.classList.toggle('dark', nextTheme === 'dark');
+  applyThemeState(nextTheme);
   localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
 
   if (themeToggleBtn) {
@@ -1351,6 +1393,7 @@ function handleFontSizeChange(size) {
 async function init() {
   initTheme();
   initFontSize();
+  initializeScrollPath();
   fetchUrbanSignals();
   attachEvents();
   initializeEcoGuide();

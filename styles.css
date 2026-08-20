@@ -15,6 +15,87 @@ html, body {
 body {
   min-height: 100vh;
   padding: 0;
+  position: relative;
+}
+
+.svg-scroll-container {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.scroll-svg {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0.38;
+}
+
+.scroll-leaf {
+  opacity: 0;
+  transition: opacity 260ms ease;
+}
+
+.scroll-leaf.is-visible {
+  opacity: 0.92;
+}
+
+.scroll-leaf-shape,
+.scroll-leaf-vein {
+  transform-box: fill-box;
+  transform-origin: 0 0;
+  transform: scale(0.2);
+  transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scroll-leaf.is-visible .scroll-leaf-shape,
+.scroll-leaf.is-visible .scroll-leaf-vein {
+  transform: scale(1);
+}
+
+.scroll-leaf-shape {
+  fill: #65a30d;
+}
+
+.scroll-leaf-vein {
+  fill: none;
+  stroke: rgba(22, 101, 52, 0.75);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+html.dark .scroll-leaf-shape {
+  fill: #84cc16;
+}
+
+html.dark .scroll-leaf-vein {
+  stroke: rgba(217, 249, 157, 0.72);
+}
+
+body > .min-h-screen {
+  position: relative;
+  z-index: auto;
+}
+
+#home > .relative,
+#dashboardOverview > .mb-8,
+#dashboardOverview .grid > *,
+#sitemap,
+.points-container,
+.eco-guide-fab,
+.eco-guide-panel,
+.modal {
+  position: relative;
+  z-index: 2;
 }
 
 html.dark {
@@ -97,8 +178,42 @@ button, input, select {
   position: relative;
   overflow: hidden;
   transition-duration: 0.3s;
-  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.04);
   background-color: rgb(255, 65, 65);
+}
+
+:root {
+  --svg-stroke: #059669;
+  --surface-soft: #fafafa;
+  --surface-border: 1px solid rgba(0, 0, 0, 0.08);
+  --surface-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.04);
+  --surface-hover-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.08);
+  --surface-transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+
+html.dark,
+body.dark-mode,
+[data-theme="dark"] {
+  --svg-stroke: #34d399;
+}
+
+#scroll-path {
+  stroke: var(--svg-stroke);
+  transition: stroke 0.3s ease;
+}
+
+html.dark #scroll-path,
+body.dark-mode #scroll-path,
+[data-theme="dark"] #scroll-path {
+  filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.5));
+}
+
+header {
+  border-bottom: var(--surface-border) !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  box-shadow: var(--surface-shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .Btn .sign {
@@ -156,6 +271,77 @@ button, input, select {
   background: rgba(15, 118, 110, 0.18);
   border: 1px solid rgba(52, 211, 153, 0.25);
   color: white;
+}
+
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.bento-grid > div {
+  grid-column: span 1;
+  grid-row: span 1;
+}
+
+.bento-grid > .bento-large {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+.aqhi-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.status-pill {
+  align-self: flex-start;
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.status-pill-low {
+  background: rgba(52, 211, 153, 0.16);
+  color: #a7f3d0;
+}
+
+.status-pill-moderate {
+  background: rgba(251, 191, 36, 0.16);
+  color: #fde68a;
+}
+
+.status-pill-high {
+  background: rgba(248, 113, 113, 0.16);
+  color: #fecaca;
+}
+
+.aqhi-desc {
+  margin: 1rem 0 0;
+  color: #cbd5e1;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bento-grid > .bento-large {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
 }
 
 .metric-card-dashboard {
@@ -526,14 +712,26 @@ button, input, select {
   align-items: center;
   gap: 10px;
   border: none;
-  border-radius: 999px;
+  border-radius: 36px;
   background: linear-gradient(135deg, #10b981, #14b8a6);
   color: white;
-  padding: 18px;
+  padding: 14px 16px 18px;
   box-shadow: 0 20px 40px rgba(16, 185, 129, 0.32);
   cursor: pointer;
   font-weight: 700;
   transition: opacity 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+
+.eco-guide-fab::after {
+  content: '';
+  position: absolute;
+  right: 18px;
+  bottom: -10px;
+  width: 0;
+  height: 0;
+  border-top: 14px solid #14b8a6;
+  border-left: 12px solid transparent;
+  transform: rotate(-8deg);
 }
 
 .eco-guide-fab--hidden {
@@ -758,4 +956,144 @@ button, input, select {
     bottom: 12px;
     padding: 10px 16px;
   }
+}
+
+#dashboardOverview .grid > .col-span-3,
+#dashboardOverview .grid > section,
+.metric-card-dashboard,
+.modal-card,
+.scanner-surface,
+.scan-result,
+.points-container,
+.auth-tabs,
+.eco-guide-panel,
+.eco-guide-input-wrap {
+  border: var(--surface-border) !important;
+  border-radius: 16px;
+  background: var(--surface-soft) !important;
+  box-shadow: var(--surface-shadow) !important;
+  transition: var(--surface-transition);
+}
+
+.points-container {
+  color: #0f172a;
+}
+
+.points-label {
+  color: #475569;
+}
+
+#points-display {
+  color: #047857;
+}
+
+#dashboardOverview .grid > .col-span-3:hover,
+#dashboardOverview .grid > section:hover,
+.metric-card-dashboard:hover,
+.modal-card:hover,
+.scanner-surface:hover,
+.scan-result:hover,
+.points-container:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--surface-hover-shadow) !important;
+}
+
+.field-group input,
+.eco-guide-input-wrap input,
+#streetSelect,
+#binSearch {
+  border: var(--surface-border) !important;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.85) !important;
+  box-shadow: var(--surface-shadow) !important;
+  transition: var(--surface-transition), border-color 0.2s ease;
+}
+
+.primary-btn,
+.secondary-btn,
+.close-btn,
+#redeem-points-btn,
+.eco-guide-fab,
+.eco-guide-input-wrap button,
+#themeToggleBtn,
+#headerDemoFillBtn,
+#loginPromptBtn,
+#resetAppBtn,
+#saveTodayBtn,
+#scanItemBtn,
+header a[href="#dashboardOverview"],
+header a[href="#carbonPanel"] {
+  border: var(--surface-border);
+  box-shadow: var(--surface-shadow) !important;
+  transition: var(--surface-transition);
+}
+
+.primary-btn:hover,
+.secondary-btn:hover,
+.close-btn:hover,
+#redeem-points-btn:hover,
+.eco-guide-fab:hover,
+.eco-guide-fab:focus-visible,
+.eco-guide-input-wrap button:hover,
+#themeToggleBtn:hover,
+#headerDemoFillBtn:hover,
+#loginPromptBtn:hover,
+#resetAppBtn:hover,
+#saveTodayBtn:hover,
+#scanItemBtn:hover,
+header a[href="#dashboardOverview"]:hover,
+header a[href="#carbonPanel"]:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--surface-hover-shadow) !important;
+}
+
+html.dark #dashboardOverview .grid > .col-span-3,
+html.dark #dashboardOverview .grid > section,
+html.dark .metric-card-dashboard,
+html.dark .modal-card,
+html.dark .scanner-surface,
+html.dark .scan-result,
+html.dark .points-container,
+html.dark .auth-tabs,
+html.dark .eco-guide-panel,
+html.dark .eco-guide-input-wrap {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(15, 23, 42, 0.88) !important;
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.18) !important;
+}
+
+html.dark header {
+  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(15, 23, 42, 0.85) !important;
+}
+
+html.dark #themeToggleBtn {
+  border-color: rgba(148, 163, 184, 0.42) !important;
+}
+
+html.dark #themeToggleBtn:hover,
+html.dark #themeToggleBtn:focus-visible {
+  border-color: rgba(110, 231, 183, 0.7) !important;
+  outline: none;
+}
+
+html.dark .points-container {
+  color: #f8fafc;
+}
+
+html.dark .points-label {
+  color: rgba(226, 232, 240, 0.82);
+}
+
+html.dark #points-display {
+  color: #a7f3d0;
+}
+
+html.dark .field-group input,
+html.dark .eco-guide-input-wrap input,
+html.dark #streetSelect,
+html.dark #binSearch {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(15, 23, 42, 0.85) !important;
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.18) !important;
 }
