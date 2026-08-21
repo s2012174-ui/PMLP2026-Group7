@@ -2,7 +2,6 @@ const AQHI_DATA_URL = 'https://dashboard.data.gov.hk/api/aqhi-individual?format=
 const URBAN_AQHI_DATA_URL = 'https://www.aqhi.gov.hk/epd/json/gene_aqhi_Eng.json';
 const HKO_WEATHER_DATA_URL = 'https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en';
 const POLLUTANT_DATA_URL = 'https://www.aqhi.gov.hk/epd/ddata/html/out/24pc_Eng.xml';
-const API_URL = 'https://YOUR-HUGGINGFACE-SPACE-NAME.hf.space/predict';
 const DEFAULT_AQHI_STATION = 'Central';
 
 const fallbackStationData = [
@@ -29,22 +28,6 @@ const fallbackPollutantData = {
 
 let airQualityStationCache = [...fallbackStationData];
 
-const materialGuide = {
-  'Plastic #1': 'Rinse PET containers and place in the clear plastic stream. Avoid lids and labels if local rules require separating them.',
-  'Plastic #2': 'Clean HDPE bottles and jugs. Caps can usually go in the same bin, but all residues should be removed first.',
-  'Glass': 'Empty bottles and jars before dropping off. Remove lids and place glass separately from paper and metals.',
-  'Batteries': 'Use a sealed battery collection container. Never place loose alkaline or lithium batteries in regular recycling bins.',
-  'E-Waste': 'Bring old chargers, cables, and electronics to an approved e-waste kiosk. Keep devices intact when possible.',
-  'Paper': 'Flatten cardboard and keep paper dry. Remove plastic sleeves and food contamination before recycling.'
-};
-
-const dropOffs = [
-  { name: 'GreenLoop Station', distance: '0.4 mi', type: 'Mixed recycling', materials: ['Plastic #1', 'Paper', 'Glass'] },
-  { name: 'East Yard Hub', distance: '0.9 mi', type: 'E-waste + batteries', materials: ['E-Waste', 'Batteries'] },
-  { name: 'Bloom Block Center', distance: '1.1 mi', type: 'Compost & plastics', materials: ['Plastic #2', 'Paper'] },
-  { name: 'Civic Reuse Depot', distance: '1.6 mi', type: 'Glass + metal', materials: ['Glass', 'Plastic #1'] }
-];
-
 const DEFAULT_USERNAME = 'Test1234';
 const DEFAULT_PASSWORD = '123456578';
 const AUTH_STORAGE_KEY = 'ecopulseAuthState';
@@ -54,8 +37,10 @@ const THEME_STORAGE_KEY = 'ecopulseTheme';
 const FONT_SIZE_STORAGE_KEY = 'ecopulseFontSize';
 const GREEN_POINTS_STORAGE_KEY = 'greenPoints';
 const WASTE_MODEL_URL = 'https://teachablemachine.withgoogle.com/models/azyOS7fIG/';
+const MODEL_URL = 'https://teachablemachine.withgoogle.com/models/XtUm6Kek5/';
 
 let wasteModel = null;
+let mealModel = null;
 let greenPoints = Number(localStorage.getItem(GREEN_POINTS_STORAGE_KEY) || 0);
 let hasRedeemedForCurrentUpload = false;
 
@@ -112,10 +97,10 @@ function initializeScrollPath() {
 
 const commuteRange = document.getElementById('commuteRange');
 const energyRange = document.getElementById('energyRange');
-const meatRange = document.getElementById('meatRange');
+const mealInput = document.getElementById('mealInput');
 const commuteValue = document.getElementById('commuteValue');
 const energyValue = document.getElementById('energyValue');
-const meatValue = document.getElementById('meatValue');
+const mealValue = document.getElementById('mealValue');
 const carbonResult = document.getElementById('carbonResult');
 const goalFill = document.getElementById('goalFill');
 const goalLabel = document.getElementById('goalLabel');
@@ -123,26 +108,30 @@ const currentCarbonTotal = document.getElementById('currentCarbonTotal');
 const historyBars = document.getElementById('historyBars');
 const saveTodayBtn = document.getElementById('saveTodayBtn');
 
-const dropoffList = document.getElementById('dropoffList');
-const materialSelect = document.getElementById('materialSelect');
-const materialInfo = document.getElementById('materialInfo');
-const binSearch = document.getElementById('binSearch');
-
-const scanModal = document.getElementById('scanModal');
-const closeModalBtn = document.getElementById('closeModalBtn');
-const scanItemBtn = document.getElementById('scanItemBtn');
-const scanActionBtn = document.getElementById('scanActionBtn');
-const scanResultText = document.getElementById('scanResultText');
-const mealUploadInput = document.getElementById('meal-upload');
+const mealUploadInput = document.getElementById('meal-input');
 const mealPreview = document.getElementById('meal-preview');
-const analyzeBtn = document.getElementById('analyze-btn');
-const mealResults = document.getElementById('meal-results');
+const scanBtn = document.getElementById('scan-btn');
+const mealResults = document.getElementById('emission-results');
 const mealNameEl = document.getElementById('meal-name');
-const mealCaloriesEl = document.getElementById('meal-total-calories');
-const mealProteinEl = document.getElementById('meal-protein');
-const mealCarbsEl = document.getElementById('meal-carbs');
-const mealFatEl = document.getElementById('meal-fat');
-const mealItemsEl = document.getElementById('meal-items');
+const mealConfidenceEl = document.getElementById('meal-confidence');
+const mealEmissionEl = document.getElementById('meal-emission');
+
+const mealEmissionByClass = {
+  'rice': 0.4,
+  'noodles': 0.7,
+  'steak': 5.9,
+  'beef burger': 5.0,
+  'chicken burger': 1.8,
+  'chicken curry': 1.4,
+  'fried chicken': 2.4,
+  'fried rice': 1.1,
+  'hamburger': 5.0,
+  'pizza': 1.8,
+  'pasta': 0.9,
+  'salad': 0.4,
+  'sushi': 1.2,
+  'vegetable curry': 0.7
+};
 
 const authModal = document.getElementById('authModal');
 const authError = document.getElementById('authError');
@@ -727,14 +716,14 @@ async function updateAirQuality() {
 function calculateCarbonFootprint() {
   const commute = Number(commuteRange.value);
   const energy = Number(energyRange.value);
-  const meat = Number(meatRange.value);
+  const meal = Math.max(0, Number(mealInput.value) || 0);
 
-  const estimate = (commute * 0.17) + (energy * 0.22) + (meat * 0.93);
+  const estimate = (commute * 0.17) + (energy * 0.22) + meal;
   const rounded = estimate.toFixed(1);
 
   commuteValue.textContent = `${commute} km`;
   energyValue.textContent = `${energy} kWh`;
-  meatValue.textContent = `${meat} meals`;
+  mealValue.textContent = `${meal.toFixed(1)} kg CO₂e`;
   carbonResult.textContent = rounded;
   currentCarbonTotal.textContent = `${rounded} kg`;
 
@@ -794,52 +783,6 @@ function saveTodayFootprint() {
   const updated = [...existing, { day, total }].slice(-7);
   saveTotals(updated);
   renderHistory();
-}
-
-function renderDropoffs(query = '') {
-  const normalized = query.trim().toLowerCase();
-  const filtered = dropOffs.filter((dropoff) => {
-    const haystack = `${dropoff.name} ${dropoff.type} ${dropoff.materials.join(' ')}`.toLowerCase();
-    return haystack.includes(normalized);
-  });
-
-  dropoffList.innerHTML = filtered
-    .map(
-      (dropoff) => `
-        <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-emerald-200 hover:bg-white">
-          <div class="flex items-center justify-between">
-            <span class="font-semibold text-slate-900">${dropoff.name}</span>
-            <span class="text-xs font-medium text-slate-500">${dropoff.distance}</span>
-          </div>
-          <div class="mt-2 flex items-center justify-between text-xs text-slate-500">
-            <span>${dropoff.type}</span>
-            <span>Open now</span>
-          </div>
-          <div class="mt-4 flex flex-wrap gap-2">
-            ${dropoff.materials.map((material) => `<span class="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700">${material}</span>`).join('')}
-          </div>
-        </article>
-      `
-    )
-    .join('');
-}
-
-function updateMaterialGuide() {
-  const selected = materialSelect.value;
-  const text = materialGuide[selected];
-  materialInfo.innerHTML = `
-    <h5 class="mb-2 text-sm font-semibold text-white">${selected}</h5>
-    <p class="text-sm leading-6 text-slate-200">${text}</p>
-  `;
-}
-
-function openScanModal() {
-  scanModal.classList.remove('hidden');
-  scanResultText.textContent = 'Plastic bottle';
-}
-
-function closeScanModal() {
-  scanModal.classList.add('hidden');
 }
 
 let navUpdateFrame = null;
@@ -905,35 +848,31 @@ function setWasteStatus(message) {
   wasteStatus.textContent = message;
 }
 
-function renderMealResults(payload) {
-  if (!mealResults || !mealNameEl || !mealCaloriesEl || !mealProteinEl || !mealCarbsEl || !mealFatEl || !mealItemsEl) return;
+function normalizeMealClassName(value) {
+  return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
 
-  const mealName = payload?.meal_name || 'Detected Meal';
-  const totalCalories = Number(payload?.total_calories || 0);
-  const items = Array.isArray(payload?.items) ? payload.items : [];
+function getMealEmission(className) {
+  const normalizedClassName = normalizeMealClassName(className);
+  return mealEmissionByClass[normalizedClassName] ?? 1.0;
+}
 
-  const protein = items.reduce((sum, item) => sum + Number(item?.protein || 0), 0);
-  const carbs = items.reduce((sum, item) => sum + Number(item?.carbs || 0), 0);
-  const fat = items.reduce((sum, item) => sum + Number(item?.fat || 0), 0);
+async function loadMealModel() {
+  if (mealModel) return mealModel;
+  if (!window.tmImage) throw new Error('Teachable Machine is not available yet.');
 
-  mealNameEl.textContent = mealName;
-  mealCaloriesEl.textContent = `${Math.round(totalCalories)} kcal`;
-  mealProteinEl.textContent = `${Math.round(protein)}g`;
-  mealCarbsEl.textContent = `${Math.round(carbs)}g`;
-  mealFatEl.textContent = `${Math.round(fat)}g`;
+  const modelURL = MODEL_URL + 'model.json';
+  const metadataURL = MODEL_URL + 'metadata.json';
+  mealModel = await tmImage.load(modelURL, metadataURL);
+  return mealModel;
+}
 
-  mealItemsEl.innerHTML = items.length
-    ? items.map((item) => `
-        <li class="meal-item">
-          <div>
-            <span class="meal-item__name">${(item?.food_name || 'Food').replace(/\b\w/g, (char) => char.toUpperCase())}</span>
-            <small>${Number(item?.estimated_grams || 0)}g • ${(Number(item?.confidence || 0) * 100).toFixed(0)}% match</small>
-          </div>
-          <span class="meal-item__calories">${Math.round(Number(item?.calories || 0))} kcal</span>
-        </li>
-      `).join('')
-    : '<li class="meal-item meal-item--empty"><span>No detected foods.</span></li>';
+function renderMealResults(className, confidence, emission) {
+  if (!mealResults || !mealNameEl || !mealConfidenceEl || !mealEmissionEl) return;
 
+  mealNameEl.textContent = className || 'Detected Meal';
+  mealConfidenceEl.textContent = `${(confidence * 100).toFixed(1)}% confidence`;
+  mealEmissionEl.textContent = emission.toFixed(2);
   mealResults.classList.remove('hidden');
 }
 
@@ -1114,21 +1053,11 @@ function attachEvents() {
     window.addEventListener('resize', renderAirParticles);
   }
 
-  [commuteRange, energyRange, meatRange].forEach((slider) => {
-    slider.addEventListener('input', calculateCarbonFootprint);
+  [commuteRange, energyRange, mealInput].forEach((input) => {
+    input.addEventListener('input', calculateCarbonFootprint);
   });
 
   saveTodayBtn.addEventListener('click', saveTodayFootprint);
-  binSearch.addEventListener('input', (event) => renderDropoffs(event.target.value));
-  materialSelect.addEventListener('change', updateMaterialGuide);
-  scanItemBtn.addEventListener('click', openScanModal);
-  closeModalBtn.addEventListener('click', closeScanModal);
-  scanActionBtn.addEventListener('click', () => {
-    const item = 'Plastic bottle';
-    scanResultText.textContent = item;
-    materialSelect.value = 'Plastic #1';
-    updateMaterialGuide();
-  });
 
   if (mealUploadInput) {
     mealUploadInput.addEventListener('change', (event) => {
@@ -1143,36 +1072,25 @@ function attachEvents() {
     });
   }
 
-  if (analyzeBtn) {
-    analyzeBtn.addEventListener('click', async () => {
+  if (scanBtn) {
+    scanBtn.addEventListener('click', async () => {
       if (!mealUploadInput || !mealUploadInput.files || !mealUploadInput.files[0]) {
         if (mealResults) {
           mealResults.classList.remove('hidden');
-          mealResults.querySelector('h4')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          mealNameEl.textContent = 'Upload a meal image first';
         }
         return;
       }
 
-      const file = mealUploadInput.files[0];
-      const previousButtonText = analyzeBtn.textContent;
-      analyzeBtn.disabled = true;
-      analyzeBtn.textContent = 'Scanning Dish...';
-
-      const formData = new FormData();
-      formData.append('file', file);
-
+      scanBtn.disabled = true;
+      scanBtn.textContent = 'Scanning Footprint...';
       try {
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          body: formData
-        });
-
-        if (!response.ok) {
-          throw new Error(`Prediction request failed: ${response.status}`);
-        }
-
-        const payload = await response.json();
-        renderMealResults(payload);
+        const model = await loadMealModel();
+        const prediction = await model.predict(mealPreview);
+        const topPrediction = [...prediction].sort((a, b) => Number(b.probability || 0) - Number(a.probability || 0))[0];
+        const className = topPrediction?.className || 'Unknown meal';
+        const confidence = Number(topPrediction?.probability || 0);
+        renderMealResults(className, confidence, getMealEmission(className));
 
         const previousPoints = greenPoints;
         greenPoints += 100;
@@ -1188,21 +1106,18 @@ function attachEvents() {
         if (mealResults) {
           mealResults.classList.remove('hidden');
           mealNameEl.textContent = 'Scan failed';
-          mealCaloriesEl.textContent = '0 kcal';
-          mealProteinEl.textContent = '0g';
-          mealCarbsEl.textContent = '0g';
-          mealFatEl.textContent = '0g';
-          mealItemsEl.innerHTML = '<li class="meal-item meal-item--empty"><span>Unable to analyze the meal image.</span></li>';
+          mealConfidenceEl.textContent = 'Try again';
+          mealEmissionEl.textContent = '0.00';
         }
       } finally {
-        analyzeBtn.disabled = false;
-        analyzeBtn.textContent = previousButtonText;
+        scanBtn.disabled = false;
+        scanBtn.textContent = 'Scan Footprint';
       }
     });
   }
 
-  scanModal.addEventListener('click', (event) => {
-    if (event.target === scanModal) closeScanModal();
+  loadMealModel().catch((error) => {
+    console.warn('Meal model load failed on init:', error);
   });
 
   loginTab.addEventListener('click', () => switchAuthTab('login'));
@@ -1504,6 +1419,31 @@ function handleFontSizeChange(size) {
   });
 }
 
+function initializeHeroTypewriter() {
+  const heroSubtitle = document.getElementById('hero-subtitle');
+  if (!heroSubtitle || heroSubtitle.dataset.typewriterInitialized === 'true') return;
+
+  const originalText = 'Real-Time Urban Environmental Intelligence for Greener Cities';
+  let characterIndex = 0;
+  heroSubtitle.dataset.typewriterInitialized = 'true';
+  heroSubtitle.textContent = '';
+  heroSubtitle.classList.add('typing');
+
+  const typeNextCharacter = () => {
+    heroSubtitle.textContent = originalText.slice(0, characterIndex + 1);
+    characterIndex += 1;
+
+    if (characterIndex >= originalText.length) {
+      heroSubtitle.classList.remove('typing');
+      return;
+    }
+
+    window.setTimeout(typeNextCharacter, 45);
+  };
+
+  window.setTimeout(typeNextCharacter, 45);
+}
+
 async function init() {
   initTheme();
   initFontSize();
@@ -1521,9 +1461,8 @@ async function init() {
   applyAirQualityData(initialRecord, initialPollutants);
   calculateCarbonFootprint();
   renderHistory();
-  renderDropoffs();
-  updateMaterialGuide();
   scheduleActiveNavUpdate();
 }
 
+document.addEventListener('DOMContentLoaded', initializeHeroTypewriter);
 init();
