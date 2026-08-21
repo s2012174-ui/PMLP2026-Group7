@@ -610,6 +610,60 @@
               </div>
             </section>
 
+            <section class="meal-scanner-card col-span-12 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-[10px] uppercase tracking-[0.22em] text-slate-500">Meal scanner</p>
+                  <h3 class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">Food detection & nutrition</h3>
+                </div>
+                <span class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">AI estimate</span>
+              </div>
+
+              <div class="meal-scanner-layout mt-6">
+                <div class="meal-upload-panel">
+                  <div class="meal-upload-box">
+                    <label for="meal-upload" class="block text-sm font-semibold text-slate-700">Upload meal image</label>
+                    <input id="meal-upload" type="file" accept="image/*" />
+
+                    <div class="meal-preview-wrap">
+                      <img id="meal-preview" alt="Meal preview" class="hidden" />
+                    </div>
+                  </div>
+
+                  <button id="analyze-btn" type="button">Analyze Meal</button>
+                </div>
+
+                <div id="meal-results" class="meal-results hidden">
+                  <div class="meal-results__header">
+                    <h4 id="meal-name">Detected Meal</h4>
+                    <span class="meal-results__score">Scan complete</span>
+                  </div>
+
+                  <div class="meal-total">
+                    <strong id="meal-total-calories">0</strong>
+                    <span>kcal</span>
+                  </div>
+
+                  <div class="meal-macros">
+                    <div class="macro-pill macro-pill--protein">
+                      <span>Protein</span>
+                      <strong id="meal-protein">0g</strong>
+                    </div>
+                    <div class="macro-pill macro-pill--carbs">
+                      <span>Carbs</span>
+                      <strong id="meal-carbs">0g</strong>
+                    </div>
+                    <div class="macro-pill macro-pill--fat">
+                      <span>Fat</span>
+                      <strong id="meal-fat">0g</strong>
+                    </div>
+                  </div>
+
+                  <ul id="meal-items" class="meal-items"></ul>
+                </div>
+              </div>
+            </section>
+
             <section class="col-span-12 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
               <div class="flex items-center justify-between">
                 <div>

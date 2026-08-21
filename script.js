@@ -2,6 +2,7 @@ const AQHI_DATA_URL = 'https://dashboard.data.gov.hk/api/aqhi-individual?format=
 const URBAN_AQHI_DATA_URL = 'https://www.aqhi.gov.hk/epd/json/gene_aqhi_Eng.json';
 const HKO_WEATHER_DATA_URL = 'https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en';
 const POLLUTANT_DATA_URL = 'https://www.aqhi.gov.hk/epd/ddata/html/out/24pc_Eng.xml';
+const API_URL = 'https://YOUR-HUGGINGFACE-SPACE-NAME.hf.space/predict';
 const DEFAULT_AQHI_STATION = 'Central';
 
 const fallbackStationData = [
@@ -132,6 +133,16 @@ const closeModalBtn = document.getElementById('closeModalBtn');
 const scanItemBtn = document.getElementById('scanItemBtn');
 const scanActionBtn = document.getElementById('scanActionBtn');
 const scanResultText = document.getElementById('scanResultText');
+const mealUploadInput = document.getElementById('meal-upload');
+const mealPreview = document.getElementById('meal-preview');
+const analyzeBtn = document.getElementById('analyze-btn');
+const mealResults = document.getElementById('meal-results');
+const mealNameEl = document.getElementById('meal-name');
+const mealCaloriesEl = document.getElementById('meal-total-calories');
+const mealProteinEl = document.getElementById('meal-protein');
+const mealCarbsEl = document.getElementById('meal-carbs');
+const mealFatEl = document.getElementById('meal-fat');
+const mealItemsEl = document.getElementById('meal-items');
 
 const authModal = document.getElementById('authModal');
 const authError = document.getElementById('authError');
@@ -894,6 +905,38 @@ function setWasteStatus(message) {
   wasteStatus.textContent = message;
 }
 
+function renderMealResults(payload) {
+  if (!mealResults || !mealNameEl || !mealCaloriesEl || !mealProteinEl || !mealCarbsEl || !mealFatEl || !mealItemsEl) return;
+
+  const mealName = payload?.meal_name || 'Detected Meal';
+  const totalCalories = Number(payload?.total_calories || 0);
+  const items = Array.isArray(payload?.items) ? payload.items : [];
+
+  const protein = items.reduce((sum, item) => sum + Number(item?.protein || 0), 0);
+  const carbs = items.reduce((sum, item) => sum + Number(item?.carbs || 0), 0);
+  const fat = items.reduce((sum, item) => sum + Number(item?.fat || 0), 0);
+
+  mealNameEl.textContent = mealName;
+  mealCaloriesEl.textContent = `${Math.round(totalCalories)} kcal`;
+  mealProteinEl.textContent = `${Math.round(protein)}g`;
+  mealCarbsEl.textContent = `${Math.round(carbs)}g`;
+  mealFatEl.textContent = `${Math.round(fat)}g`;
+
+  mealItemsEl.innerHTML = items.length
+    ? items.map((item) => `
+        <li class="meal-item">
+          <div>
+            <span class="meal-item__name">${(item?.food_name || 'Food').replace(/\b\w/g, (char) => char.toUpperCase())}</span>
+            <small>${Number(item?.estimated_grams || 0)}g • ${(Number(item?.confidence || 0) * 100).toFixed(0)}% match</small>
+          </div>
+          <span class="meal-item__calories">${Math.round(Number(item?.calories || 0))} kcal</span>
+        </li>
+      `).join('')
+    : '<li class="meal-item meal-item--empty"><span>No detected foods.</span></li>';
+
+  mealResults.classList.remove('hidden');
+}
+
 function animateCountUp(element, startVal, endVal, duration) {
   if (!element) return;
 
@@ -1086,6 +1129,77 @@ function attachEvents() {
     materialSelect.value = 'Plastic #1';
     updateMaterialGuide();
   });
+
+  if (mealUploadInput) {
+    mealUploadInput.addEventListener('change', (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      if (mealPreview) {
+        const previewUrl = URL.createObjectURL(file);
+        mealPreview.src = previewUrl;
+        mealPreview.classList.remove('hidden');
+      }
+    });
+  }
+
+  if (analyzeBtn) {
+    analyzeBtn.addEventListener('click', async () => {
+      if (!mealUploadInput || !mealUploadInput.files || !mealUploadInput.files[0]) {
+        if (mealResults) {
+          mealResults.classList.remove('hidden');
+          mealResults.querySelector('h4')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+
+      const file = mealUploadInput.files[0];
+      const previousButtonText = analyzeBtn.textContent;
+      analyzeBtn.disabled = true;
+      analyzeBtn.textContent = 'Scanning Dish...';
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error(`Prediction request failed: ${response.status}`);
+        }
+
+        const payload = await response.json();
+        renderMealResults(payload);
+
+        const previousPoints = greenPoints;
+        greenPoints += 100;
+        localStorage.setItem(GREEN_POINTS_STORAGE_KEY, String(greenPoints));
+
+        const display = document.getElementById('points-display');
+        if (display) {
+          animateCountUp(display, previousPoints, greenPoints, 1500);
+          display.dataset.value = String(greenPoints);
+        }
+      } catch (error) {
+        console.error('Meal scan failed:', error);
+        if (mealResults) {
+          mealResults.classList.remove('hidden');
+          mealNameEl.textContent = 'Scan failed';
+          mealCaloriesEl.textContent = '0 kcal';
+          mealProteinEl.textContent = '0g';
+          mealCarbsEl.textContent = '0g';
+          mealFatEl.textContent = '0g';
+          mealItemsEl.innerHTML = '<li class="meal-item meal-item--empty"><span>Unable to analyze the meal image.</span></li>';
+        }
+      } finally {
+        analyzeBtn.disabled = false;
+        analyzeBtn.textContent = previousButtonText;
+      }
+    });
+  }
 
   scanModal.addEventListener('click', (event) => {
     if (event.target === scanModal) closeScanModal();
