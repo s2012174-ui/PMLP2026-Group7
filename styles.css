@@ -32,6 +32,37 @@ body {
   position: relative;
 }
 
+.ambient-glow-1,
+.ambient-glow-2 {
+  position: fixed;
+  z-index: 0;
+  width: 34rem;
+  height: 34rem;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(120px);
+  opacity: 0.4;
+  animation: pulseGlow 10s ease-in-out infinite alternate;
+}
+
+.ambient-glow-1 {
+  top: -18rem;
+  left: -14rem;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.24), transparent 68%);
+}
+
+.ambient-glow-2 {
+  right: -16rem;
+  bottom: -18rem;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.2), transparent 68%);
+  animation-delay: -4s;
+}
+
+@keyframes pulseGlow {
+  from { transform: scale(0.94); opacity: 0.28; }
+  to { transform: scale(1.08); opacity: 0.46; }
+}
+
 .svg-scroll-container {
   position: absolute;
   top: 0;
@@ -222,6 +253,23 @@ body > .min-h-screen {
   background: rgba(2, 44, 34, 0.76);
   color: #a7f3d0;
   backdrop-filter: blur(10px);
+}
+
+.status-dot {
+  display: inline-block;
+  width: 0.38rem;
+  height: 0.38rem;
+  margin-right: 0.28rem;
+  border-radius: 50%;
+  vertical-align: 0.06em;
+  background: #34d399;
+  box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.6);
+  animation: livePing 2.2s ease-out infinite;
+}
+
+.status-dot--amber {
+  background: #fbbf24;
+  box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.55);
 }
 
 .scanner-showcase {
@@ -1571,6 +1619,15 @@ select:focus-visible {
   background: #34d399;
   box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.65);
   animation: livePing 2.2s ease-out infinite;
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.55s var(--spring-curve) both;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes livePing {

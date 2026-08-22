@@ -873,7 +873,9 @@ function renderMealResults(className, confidence, emission) {
   mealNameEl.textContent = className || 'Detected Meal';
   mealConfidenceEl.textContent = `${(confidence * 100).toFixed(1)}% confidence`;
   mealEmissionEl.textContent = emission.toFixed(2);
+  mealResults.classList.remove('fade-in-up');
   mealResults.classList.remove('hidden');
+  requestAnimationFrame(() => mealResults.classList.add('fade-in-up'));
 }
 
 function animateCountUp(element, startVal, endVal, duration) {
@@ -1076,7 +1078,9 @@ function attachEvents() {
     scanBtn.addEventListener('click', async () => {
       if (!mealUploadInput || !mealUploadInput.files || !mealUploadInput.files[0]) {
         if (mealResults) {
+          mealResults.classList.remove('fade-in-up');
           mealResults.classList.remove('hidden');
+          requestAnimationFrame(() => mealResults.classList.add('fade-in-up'));
           mealNameEl.textContent = 'Upload a meal image first';
         }
         return;
@@ -1104,7 +1108,9 @@ function attachEvents() {
       } catch (error) {
         console.error('Meal scan failed:', error);
         if (mealResults) {
+          mealResults.classList.remove('fade-in-up');
           mealResults.classList.remove('hidden');
+          requestAnimationFrame(() => mealResults.classList.add('fade-in-up'));
           mealNameEl.textContent = 'Scan failed';
           mealConfidenceEl.textContent = 'Try again';
           mealEmissionEl.textContent = '0.00';
